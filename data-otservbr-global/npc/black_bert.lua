@@ -88,7 +88,7 @@ npcConfig.shop = {
 	{ itemname = "julius' map", clientid = 8200, buy = 25000 },
 	{ itemname = "letterbag", clientid = 3217, buy = 8000 },
 	{ itemname = "letter to markwin", clientid = 3220, buy = 8000 },
-	{ itemname = "lump of clay", clientid = 1000, buy = 1000 },
+	{ itemname = "lump of clay", clientid = 11329, buy = 1000 },
 	{ itemname = "machine crate", clientid = 9390, buy = 8500 },
 	{ itemname = "magic crystal", clientid = 11552, buy = 4000 },
 	{ itemname = "mago mechanic core", clientid = 9249, buy = 13000 },
@@ -123,7 +123,7 @@ npcConfig.shop = {
 	{ itemname = "silver nuggets", clientid = 27445, buy = 7000 },
 	{ itemname = "snake destroyer", clientid = 4835, buy = 8000 },
 	{ itemname = "soul contract", clientid = 10028, buy = 666 },
-	{ itemname = "special flask", clientid = 100, buy = 5000 },
+	{ itemname = "special flask", clientid = 125, buy = 5000 },
 	{ itemname = "spectral cloth", clientid = 11546, buy = 4000 },
 	{ itemname = "spectral dress", clientid = 4836, buy = 15000 },
 	{ itemname = "stabilizer", clientid = 9248, buy = 12500 },
@@ -161,7 +161,7 @@ npcType.onBuyItem = function(npc, player, itemId, subType, amount, ignore, inBac
 end
 -- On sell npc shop message
 npcType.onSellItem = function(npc, player, itemId, subtype, amount, ignore, name, totalCost)
-	player:sendTextMessage(MESSAGE_LOOK, string.format("Sold %ix %s for %i gold.", amount, name, totalCost))
+	player:sendTextMessage(MESSAGE_TRADE, string.format("Sold %ix %s for %i gold.", amount, name, totalCost))
 end
 -- On check npc shop message (look item)
 npcType.onCheckItem = function(npc, player, clientId, subType) end

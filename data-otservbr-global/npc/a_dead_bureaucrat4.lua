@@ -57,6 +57,7 @@ local config = {
 	[VOCATION.BASE_ID.DRUID] = "D R U I D",
 	[VOCATION.BASE_ID.PALADIN] = "P A L A D I N",
 	[VOCATION.BASE_ID.KNIGHT] = "K N I G H T",
+	[VOCATION.BASE_ID.MONK] = "M O N K",
 }
 
 local function greetCallback(npc, creature)
@@ -78,7 +79,7 @@ local function creatureSayCallback(npc, creature, type, message)
 	local vocationBaseId = vocation:getBaseId()
 
 	if MsgContains(message, "pumin") then
-		if player:getStorageValue(Storage.PitsOfInferno.ThronePumin) < 1 then
+		if player:getStorageValue(Storage.Quest.U7_9.ThePitsOfInferno.ThronePumin) == 1 then
 			npcHandler:say("I'm not sure if you know what you are doing but anyway. Your name is?", npc, creature)
 			npcHandler:setTopic(playerId, 1)
 		end
@@ -94,11 +95,11 @@ local function creatureSayCallback(npc, creature, type, message)
 		end
 	elseif MsgContains(message, "356") then
 		if npcHandler:getTopic(playerId) == 3 then
-			player:setStorageValue(Storage.PitsOfInferno.ThronePumin, 2)
+			player:setStorageValue(Storage.Quest.U7_9.ThePitsOfInferno.ThronePumin, 2)
 			npcHandler:say("Sorry, you need Form 145 to get Form 356. Come back when you have it", npc, creature)
 			npcHandler:setTopic(playerId, 0)
-		elseif player:getStorageValue(Storage.PitsOfInferno.ThronePumin) == 7 then
-			player:setStorageValue(Storage.PitsOfInferno.ThronePumin, 8)
+		elseif player:getStorageValue(Storage.Quest.U7_9.ThePitsOfInferno.ThronePumin) == 7 then
+			player:setStorageValue(Storage.Quest.U7_9.ThePitsOfInferno.ThronePumin, 8)
 			npcHandler:say("You are better than I thought! Congratulations, here you are: Form 356!", npc, creature)
 		end
 	end

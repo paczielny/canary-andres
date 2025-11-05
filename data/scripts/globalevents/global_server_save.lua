@@ -5,12 +5,19 @@ local function ServerSave()
 
 	if configManager.getBoolean(configKeys.GLOBAL_SERVER_SAVE_CLOSE) then
 		Game.setGameState(GAME_STATE_CLOSED)
-	elseif configManager.getBoolean(configKeys.GLOBAL_SERVER_SAVE_SHUTDOWN) then
+	end
+	if configManager.getBoolean(configKeys.GLOBAL_SERVER_SAVE_SHUTDOWN) then
 		Game.setGameState(GAME_STATE_SHUTDOWN)
 	end
 
 	-- Update daily reward next server save timestamp
 	UpdateDailyRewardGlobalStorage(DailyReward.storages.lastServerSave, os.time())
+
+	-- Reset raid daily counters
+	for name, raid in pairs(Raid.registry) do
+		raid.kv:set("checks-today", 0)
+		raid.kv:set("last-check-date", os.date("%Y%m%d"))
+	end
 end
 
 local function ServerSaveWarning(time)

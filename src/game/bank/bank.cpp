@@ -7,16 +7,15 @@
  * Website: https://docs.opentibiabr.com/
  */
 
-#include "pch.hpp"
+#include "game/bank/bank.hpp"
 
-#include "bank.hpp"
-#include "game/game.hpp"
+#include "config/configmanager.hpp"
 #include "creatures/players/player.hpp"
-#include "io/iologindata.hpp"
+#include "game/game.hpp"
 #include "game/scheduling/save_manager.hpp"
 #include "lib/metrics/metrics.hpp"
 
-Bank::Bank(const std::shared_ptr<Bankable> bankable) :
+Bank::Bank(const std::shared_ptr<Bankable> &bankable) :
 	m_bankable(bankable) {
 }
 
@@ -25,7 +24,7 @@ Bank::~Bank() {
 	if (bankable == nullptr || bankable->isOnline()) {
 		return;
 	}
-	std::shared_ptr<Player> player = bankable->getPlayer();
+	const auto &player = bankable->getPlayer();
 	if (player && !player->isOnline()) {
 		g_saveManager().savePlayer(player);
 
@@ -53,7 +52,7 @@ bool Bank::debit(uint64_t amount) {
 bool Bank::balance(uint64_t amount) const {
 	auto bankable = getBankable();
 	if (!bankable) {
-		return 0;
+		return false;
 	}
 	bankable->setBankBalance(amount);
 	return true;
@@ -77,36 +76,51 @@ const std::set<std::string> deniedNames = {
 	"druidsample",
 	"sorcerersample",
 	"knightsample",
-	"paladinsample"
+	"paladinsample",
+	"monksample",
 };
 
-const uint32_t minTownId = 3;
-
-bool Bank::transferTo(const std::shared_ptr<Bank> destination, uint64_t amount) {
+bool Bank::transferTo(const std::shared_ptr<Bank> &destination, uint64_t amount) {
 	if (!destination) {
 		g_logger().error("Bank::transferTo: destination is nullptr");
 		return false;
 	}
-	auto bankable = getBankable();
+
+	const auto bankable = getBankable();
 	if (!bankable) {
 		g_logger().error("Bank::transferTo: bankable is nullptr");
 		return false;
 	}
-	auto destinationBankable = destination->getBankable();
+
+	const auto destinationBankable = destination->getBankable();
 	if (!destinationBankable) {
 		g_logger().error("Bank::transferTo: destinationBankable is nullptr");
 		return false;
 	}
-	if (destinationBankable->getPlayer() != nullptr) {
-		auto player = destinationBankable->getPlayer();
-		auto name = asLowerCaseString(player->getName());
+
+	const auto &destinationPlayer = destinationBankable->getPlayer();
+	const auto &bankablePlayer = bankable->getPlayer();
+
+	if (destinationPlayer && bankablePlayer) {
+		auto name = asLowerCaseString(destinationPlayer->getName());
 		replaceString(name, " ", "");
+
 		if (deniedNames.contains(name)) {
 			g_logger().warn("Bank::transferTo: denied name: {}", name);
 			return false;
 		}
-		if (player->getTown()->getID() < minTownId) {
-			g_logger().warn("Bank::transferTo: denied town: {}", player->getTown()->getID());
+
+		const auto destinationTownId = destinationPlayer->getTown()->getID();
+		const auto bankableTownId = bankablePlayer->getTown()->getID();
+		const auto minTownIdToTransferFromMain = g_configManager().getNumber(MIN_TOWN_ID_TO_BANK_TRANSFER_FROM_MAIN);
+
+		if (destinationTownId < minTownIdToTransferFromMain && bankableTownId >= minTownIdToTransferFromMain) {
+			g_logger().warn("[{}] Player {} is from main town, trying to transfer money to player {} in {} town.", __FUNCTION__, bankablePlayer->getName(), destinationPlayer->getName(), destinationTownId);
+			return false;
+		}
+
+		if (bankableTownId < minTownIdToTransferFromMain && destinationTownId >= minTownIdToTransferFromMain) {
+			g_logger().warn("[{}] Player {} is not from main town, trying to transfer money to player {} in {} town.", __FUNCTION__, bankablePlayer->getName(), destinationPlayer->getName(), destinationTownId);
 			return false;
 		}
 	}
@@ -114,12 +128,22 @@ bool Bank::transferTo(const std::shared_ptr<Bank> destination, uint64_t amount) 
 	if (!(debit(amount) && destination->credit(amount))) {
 		return false;
 	}
-	g_metrics().addCounter("balance_increase", amount, { { "player", destination->getBankable()->getPlayer()->getName() }, { "context", "bank_transfer" } });
-	g_metrics().addCounter("balance_decrease", amount, { { "player", getBankable()->getPlayer()->getName() }, { "context", "bank_transfer" } });
+
+	if (destinationPlayer) {
+		g_metrics().addCounter("balance_increase", amount, { { "player", destinationPlayer->getName() }, { "context", "bank_transfer" } });
+	}
+
+	if (bankablePlayer) {
+		g_metrics().addCounter("balance_decrease", amount, { { "player", bankablePlayer->getName() }, { "context", "bank_transfer" } });
+	}
+
 	return true;
 }
 
-bool Bank::withdraw(std::shared_ptr<Player> player, uint64_t amount) {
+bool Bank::withdraw(const std::shared_ptr<Player> &player, uint64_t amount) {
+	if (!player) {
+		return false;
+	}
 	if (!debit(amount)) {
 		return false;
 	}
@@ -128,19 +152,20 @@ bool Bank::withdraw(std::shared_ptr<Player> player, uint64_t amount) {
 	return true;
 }
 
-bool Bank::deposit(const std::shared_ptr<Bank> destination) {
+bool Bank::deposit(const std::shared_ptr<Bank> &destination) {
 	auto bankable = getBankable();
 	if (!bankable) {
 		return false;
 	}
-	if (bankable->getPlayer() == nullptr) {
+	auto player = bankable->getPlayer();
+	if (!player) {
 		return false;
 	}
-	auto amount = bankable->getPlayer()->getMoney();
+	auto amount = player->getMoney();
 	return deposit(destination, amount);
 }
 
-bool Bank::deposit(const std::shared_ptr<Bank> destination, uint64_t amount) {
+bool Bank::deposit(const std::shared_ptr<Bank> &destination, uint64_t amount) {
 	if (!destination) {
 		return false;
 	}
@@ -148,9 +173,13 @@ bool Bank::deposit(const std::shared_ptr<Bank> destination, uint64_t amount) {
 	if (!bankable) {
 		return false;
 	}
-	if (!g_game().removeMoney(bankable->getPlayer(), amount)) {
+	const auto &player = bankable->getPlayer();
+	if (!player) {
 		return false;
 	}
-	g_metrics().addCounter("balance_increase", amount, { { "player", bankable->getPlayer()->getName() }, { "context", "bank_deposit" } });
+	if (!g_game().removeMoney(player, amount)) {
+		return false;
+	}
+	g_metrics().addCounter("balance_decrease", amount, { { "player", player->getName() }, { "context", "bank_deposit" } });
 	return destination->credit(amount);
 }

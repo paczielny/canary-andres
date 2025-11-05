@@ -62,13 +62,13 @@ npcConfig.shop = {
 	{ itemName = "energy ring", clientId = 3051, buy = 5000 },
 	{ itemName = "garlic necklace", clientId = 3083, buy = 100, count = 150 },
 	{ itemName = "life ring", clientId = 3052, buy = 900 },
-	{ itemName = "might ring", clientId = 3048, buy = 5000, count = 20 },
+	{ itemName = "might ring", clientId = 3048, buy = 25000, count = 20 },
 	{ itemName = "power ring", clientId = 3050, buy = 100 },
 	{ itemName = "protection amulet", clientId = 3084, buy = 700, count = 250 },
 	{ itemName = "ring of healing", clientId = 3098, buy = 2000 },
 	{ itemName = "silver amulet", clientId = 3054, buy = 100, count = 200 },
 	{ itemName = "stealth ring", clientId = 3049, buy = 5000 },
-	{ itemName = "stone skin amulet", clientId = 3081, buy = 5000, count = 5 },
+	{ itemName = "stone skin amulet", clientId = 3081, buy = 25000, count = 5 },
 	{ itemName = "strange talisman", clientId = 3045, buy = 100, count = 200 },
 	{ itemName = "sword ring", clientId = 3091, buy = 500 },
 	{ itemName = "time ring", clientId = 3053, buy = 5000 },
@@ -79,7 +79,7 @@ npcType.onBuyItem = function(npc, player, itemId, subType, amount, ignore, inBac
 end
 -- On sell npc shop message
 npcType.onSellItem = function(npc, player, itemId, subtype, amount, ignore, name, totalCost)
-	player:sendTextMessage(MESSAGE_LOOK, string.format("Sold %ix %s for %i gold.", amount, name, totalCost))
+	player:sendTextMessage(MESSAGE_TRADE, string.format("Sold %ix %s for %i gold.", amount, name, totalCost))
 end
 -- On check npc shop message (look item)
 npcType.onCheckItem = function(npc, player, clientId, subType) end

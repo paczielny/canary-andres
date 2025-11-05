@@ -71,6 +71,7 @@ local DailyRewardItems = {
 	[VOCATION.BASE_ID.DRUID] = { 266, 268, 237, 238, 23373, 3203, 3161, 3178, 3153, 3197, 3149, 3164, 3200, 3192, 3188, 3190, 3189, 3156, 3191, 3158, 3152, 3180, 3173, 3176, 3195, 3175, 3155, 3202 },
 	[VOCATION.BASE_ID.SORCERER] = { 266, 268, 237, 238, 23373, 3203, 3161, 3178, 3153, 3197, 3149, 3164, 3200, 3192, 3188, 3190, 3189, 3191, 3158, 3152, 3180, 3173, 3176, 3195, 3175, 3155, 3202 },
 	[VOCATION.BASE_ID.KNIGHT] = { 266, 236, 239, 7643, 23375, 268, 3203, 3161, 3178, 3153, 3197, 3149, 3164, 3200, 3192, 3188, 3190, 3189, 3191, 3158, 3152, 3180, 3173, 3176, 3195, 3175, 3155, 3202 },
+	[VOCATION.BASE_ID.MONK] = { 266, 236, 268, 237, 7642, 23374, 3203, 3161, 3178, 3153, 3197, 3149, 3164, 3200, 3192, 3188, 3190, 3189, 3191, 3158, 3152, 3180, 3173, 3176, 3195, 3175, 3155, 3202 },
 }
 
 DailyReward = {
@@ -137,7 +138,7 @@ DailyReward = {
 		[6] = {
 			type = DAILY_REWARD_TYPE_ITEM,
 			systemType = DAILY_REWARD_SYSTEM_TYPE_ONE,
-			items = { 28540, 28541, 28542, 28543, 28544, 28545, 44064 },
+			items = { 28540, 28541, 28542, 28543, 28544, 28545, 44064, 50292 },
 			freeAccount = 1,
 			premiumAccount = 2,
 			itemCharges = 50,
@@ -234,12 +235,6 @@ end
 DailyReward.loadDailyReward = function(playerId, target)
 	local player = Player(playerId)
 	if not player then
-		return false
-	end
-
-	local data = player:getCastViewers()
-	if data and data.broadcast then
-		player:sendCancelMessage("You cannot use these systems during the cast system live.")
 		return false
 	end
 
@@ -460,7 +455,7 @@ function Player.selectDailyReward(self, msg)
 		-- Adding items to store inbox
 		local inbox = self:getStoreInbox()
 		local inboxItems = inbox:getItems()
-		if not inbox or #inboxItems > inbox:getMaxCapacity() then
+		if not inbox or #inboxItems >= inbox:getMaxCapacity() then
 			self:sendError("You do not have enough space in your store inbox.")
 			return false
 		end
@@ -468,14 +463,12 @@ function Player.selectDailyReward(self, msg)
 		local description = ""
 		for k, v in ipairs(items) do
 			if dailyTable.itemCharges then
-				for i = 1, rewardCount do
-					local inboxItem = inbox:addItem(v.itemId, dailyTable.itemCharges) -- adding charges for each item
-					if inboxItem then
-						inboxItem:setAttribute(ITEM_ATTRIBUTE_STORE, systemTime())
-					end
+				local inboxItem = inbox:addItem(v.itemId, dailyTable.itemCharges) -- adding charges for each item
+				if inboxItem then
+					inboxItem:setAttribute(ITEM_ATTRIBUTE_STORE, systemTime())
 				end
 			else
-				local inboxItem = inbox:addItem(v.itemId, rewardCount) -- adding single item w/o charges
+				local inboxItem = inbox:addItem(v.itemId, v.count) -- adding single item w/o charges
 				if inboxItem then
 					inboxItem:setAttribute(ITEM_ATTRIBUTE_STORE, systemTime())
 				end
@@ -484,8 +477,15 @@ function Player.selectDailyReward(self, msg)
 		end
 		dailyRewardMessage = "Picked items: " .. description
 	elseif dailyTable.type == DAILY_REWARD_TYPE_XP_BOOST then
-		self:setExpBoostStamina(self:getExpBoostStamina() + (rewardCount * 60))
-		self:setStoreXpBoost(50)
+		local rewardCountReviewed = rewardCount
+		local xpBoostLeftMinutes = self:kv():get("daily-reward-xp-boost") or 0
+		if xpBoostLeftMinutes > 0 then
+			rewardCountReviewed = rewardCountReviewed - xpBoostLeftMinutes
+		end
+
+		self:setXpBoostTime(self:getXpBoostTime() + (rewardCountReviewed * 60))
+		self:kv():set("daily-reward-xp-boost", rewardCount)
+		self:setXpBoostPercent(50)
 		dailyRewardMessage = "Picked reward: XP Bonus for " .. rewardCount .. " minutes."
 	elseif dailyTable.type == DAILY_REWARD_TYPE_PREY_REROLL then
 		self:addPreyCards(rewardCount)

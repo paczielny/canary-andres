@@ -51,11 +51,6 @@ function onRecvbyte(player, msg, byte)
 		if not player:isChangingHirelingOutfit() then
 			return
 		end
-		local data = player:getCastViewers()
-		if data and data.broadcast then
-			player:sendCancelMessage("You cannot use these systems during the cast system live.")
-			return
-		end
 		parseChangeOutfit(player, msg)
 	end
 end

@@ -5,12 +5,12 @@ local oberonOthersMessages = {
 
 GrandMasterOberonAsking = {
 	[1] = { msg = "You appear like a worm among men!" },
-	[2] = { msg = "The world will suffer for its iddle laziness!" },
+	[2] = { msg = "The world will suffer for its idle laziness!" },
 	[3] = { msg = "People fall at my feet when they see me coming!" },
-	[4] = { msg = "This will be the end of mortal man!" },
+	[4] = { msg = "This will be the end of mortal men!" },
 	[5] = { msg = "I will remove you from this plane of existence!" },
 	[6] = { msg = "Dragons will soon rule this world, I am their herald!" },
-	[7] = { msg = "The true virtue of chivalry are my belief!" },
+	[7] = { msg = "The true virtues of chivalry are my belief!" },
 	[8] = { msg = "I lead the most honourable and formidable following of knights!" },
 	[9] = { msg = "ULTAH SALID'AR, ESDO LO!" },
 }

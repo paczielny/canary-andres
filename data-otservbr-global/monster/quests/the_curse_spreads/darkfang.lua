@@ -93,7 +93,7 @@ monster.loot = {
 	{ name = "bonebreaker", chance = 400 },
 	{ name = "dreaded cleaver", chance = 400 },
 	{ name = "werewolf amulet", chance = 400 },
-	{ name = "sai", chance = 250 },
+	{ id = 10389, chance = 1460 },
 	{ id = 7394, chance = 13600000 }, -- wolf trophy
 	{ name = "silver token", chance = 250 },
 	{ name = "wolf backpack", chance = 100 },
@@ -133,19 +133,5 @@ monster.immunities = {
 	{ type = "invisible", condition = true },
 	{ type = "bleed", condition = false },
 }
-
-mType.onThink = function(monster, interval) end
-
-mType.onAppear = function(monster, creature)
-	if monster:getType():isRewardBoss() then
-		monster:setReward(true)
-	end
-end
-
-mType.onDisappear = function(monster, creature) end
-
-mType.onMove = function(monster, creature, fromPosition, toPosition) end
-
-mType.onSay = function(monster, creature, type, message) end
 
 mType:register(monster)

@@ -59,7 +59,7 @@ npcConfig.shop = {
 	{ itemName = "bow", clientId = 3350, buy = 400, sell = 100 },
 	{ itemName = "crossbow", clientId = 3349, sell = 120 },
 	{ itemName = "crystalline arrow", clientId = 15793, buy = 20 },
-	{ itemName = "diamond arrow", clientId = 35901, buy = 100 },
+	{ itemName = "diamond arrow", clientId = 35901, buy = 130 },
 	{ itemName = "drill bolt", clientId = 16142, buy = 12 },
 	{ itemName = "earth arrow", clientId = 774, buy = 5 },
 	{ itemName = "envenomed arrow", clientId = 16143, buy = 12 },
@@ -85,7 +85,7 @@ npcType.onBuyItem = function(npc, player, itemId, subType, amount, ignore, inBac
 end
 -- On sell npc shop message
 npcType.onSellItem = function(npc, player, itemId, subtype, amount, ignore, name, totalCost)
-	player:sendTextMessage(MESSAGE_LOOK, string.format("Sold %ix %s for %i gold.", amount, name, totalCost))
+	player:sendTextMessage(MESSAGE_TRADE, string.format("Sold %ix %s for %i gold.", amount, name, totalCost))
 end
 -- On check npc shop message (look item)
 npcType.onCheckItem = function(npc, player, clientId, subType) end
