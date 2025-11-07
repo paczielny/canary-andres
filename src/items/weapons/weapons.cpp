@@ -229,6 +229,11 @@ bool Weapon::useFist(const std::shared_ptr<Player> &player, const std::shared_pt
 	damage.primary.value = -normal_random(0, maxDamage);
 
 	Combat::doCombatHealth(player, target, damage, params);
+
+	CreatureVector spectators;  
+	spectators.emplace_back(player);  
+	Game::addMagicEffect(spectators, target->getPosition(), CONST_ME_MELEE_FIST);  
+
 	if (!player->hasFlag(PlayerFlags_t::NotGainSkill) && player->getAddAttackSkill()) {
 		player->addSkillAdvance(SKILL_FIST, 1);
 	}
@@ -243,6 +248,36 @@ void Weapon::internalUseWeapon(const std::shared_ptr<Player> &player, const std:
 		} else {
 			g_game().sendDoubleSoundEffect(player->getPosition(), params.soundCastEffect, params.soundImpactEffect, player);
 		}
+
+		// Enviar efecto visual de ataque melee solo al jugador  
+		uint16_t meleeEffect = CONST_ME_NONE;  
+		const WeaponType_t weaponType = item->getWeaponType();  
+
+		switch (weaponType) {  
+			case WEAPON_SWORD:  
+				meleeEffect = CONST_ME_MELEE_SWORD;  
+				break;  
+			case WEAPON_CLUB:  
+				meleeEffect = CONST_ME_MELEE_CLUB;  
+				break;  
+			case WEAPON_AXE:  
+				meleeEffect = CONST_ME_MELEE_AXE;  
+				break;  
+			case WEAPON_STAFF:  
+				meleeEffect = CONST_ME_MELEE_STAFF;  
+				break;  
+			case WEAPON_DUAL_SWORD:  
+				meleeEffect = CONST_ME_MELEE_DUAL_SWORD;  
+				break;  
+			default:  
+				break;  
+		}  
+		  
+		if (meleeEffect != CONST_ME_NONE) {  
+			CreatureVector spectators;  
+			spectators.emplace_back(player);  
+			Game::addMagicEffect(spectators, target->getPosition(), meleeEffect);  
+		}  
 	}
 
 	if (isLoadedScriptId()) {
@@ -598,7 +633,9 @@ bool WeaponMelee::getSkillType(const std::shared_ptr<Player> &player, const std:
 			return true;
 		}
 
-		case WEAPON_FIST: {
+		case WEAPON_FIST:
+		case WEAPON_STAFF:
+		case WEAPON_DUAL_SWORD: {
 			skill = SKILL_FIST;
 			return true;
 		}

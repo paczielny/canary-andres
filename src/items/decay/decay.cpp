@@ -210,15 +210,21 @@ void Decay::internalDecayItem(const std::shared_ptr<Item> &item) {
 		}
 		g_game().transformItem(item, static_cast<uint16_t>(it.decayTo));
 	} else {
-		if (item->isLoadedFromMap()) {
-			return;
-		}
-
-		ReturnValue ret = g_game().internalRemoveItem(item);
-		if (ret != RETURNVALUE_NOERROR) {
-			g_logger().error("[Decay::internalDecayItem] - internalDecayItem failed, "
-			                 "error code: {}, item id: {}",
-			                 static_cast<uint32_t>(ret), item->getID());
-		}
+		if (item->isLoadedFromMap()) {  
+			return;  
+		}  
+		
+		// AGREGAR: Verificar que el item tenga un parent válido  
+		if (!item->getParent()) {  
+			g_logger().debug("[Decay::internalDecayItem] - Item {} has no parent, skipping removal", item->getID());  
+			return;  
+		}  
+	
+		ReturnValue ret = g_game().internalRemoveItem(item);  
+		if (ret != RETURNVALUE_NOERROR) {  
+			g_logger().error("[Decay::internalDecayItem] - internalDecayItem failed, "  
+							"error code: {}, item id: {}",  
+							static_cast<uint32_t>(ret), item->getID());  
+		}  
 	}
 }

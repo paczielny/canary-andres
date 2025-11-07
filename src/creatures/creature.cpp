@@ -494,6 +494,14 @@ void Creature::onCreatureMove(const std::shared_ptr<Creature> &creature, const s
 			}
 		}
 	}
+
+	if (oldPos.z != newPos.z && creature.get() == this) {  
+		if (const auto &player = creature->getPlayer()) {  
+			if (g_configManager().getBoolean(TOGGLE_EXPERT_PVP)) {  
+				g_game().updateCreatureSquare(player);  
+			}  
+		}  
+	} 
 }
 
 void Creature::onDeath() {

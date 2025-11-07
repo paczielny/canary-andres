@@ -1151,12 +1151,12 @@ void Item::serializeAttr(PropWriteStream &propWriteStream) const {
 	}
 }
 
-void Item::setOwner(const std::shared_ptr<Creature> &owner) {
-	auto ownerId = owner->getID();
-	if (owner->getPlayer()) {
-		ownerId = owner->getPlayer()->getGUID();
-	}
-	setOwner(ownerId);
+void Item::setOwner(const std::shared_ptr<Creature> &owner) {  
+    auto ownerId = owner->getID();  
+    if (owner->getPlayer()) {  
+        ownerId = owner->getPlayer()->getGUID();  
+    }  
+    setOwner(ownerId);  
 }
 
 bool Item::isOwner(const std::shared_ptr<Creature> &owner) const {

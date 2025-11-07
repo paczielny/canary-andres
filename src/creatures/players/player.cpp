@@ -481,6 +481,12 @@ uint16_t Player::getAttackSkill(const std::shared_ptr<Item> &item) const {
 			break;
 		}
 
+		case WEAPON_STAFF:  
+		case WEAPON_DUAL_SWORD: {  
+			attackSkill = getSkillLevel(SKILL_FIST);  
+			break;  
+		}
+
 		default: {
 			attackSkill = 0;
 			break;
@@ -1349,168 +1355,195 @@ bool Player::canSeeCreature(const std::shared_ptr<Creature> &creature) const {
 	return true;
 }
 
-bool Player::canCombat(const std::shared_ptr<Creature> &creature) const {
-	bool expertPvpActive = g_configManager().getBoolean(TOGGLE_EXPERT_PVP) || (g_game().getWorldType() == WORLD_TYPE_PVP_ENFORCED);
-	if (!expertPvpActive) {
-		return true;
-	}
+bool Player::canCombat(const std::shared_ptr<Creature> &creature) const {  
+	bool expertPvpActive = g_configManager().getBoolean(TOGGLE_EXPERT_PVP) || (g_game().getWorldType() == WORLD_TYPE_PVP_ENFORCED);  
+	if (!expertPvpActive) {  
+		return true;  
+	}  
+  
+	if (const auto &monster = creature->getMonster()) {  
+		if (!monster->isSummon()) {  
+			return true;  
+		}  
+  
+		const auto master = monster->getMaster();  
+		if (!master) {  
+			return true;  
+		}  
+  
+		auto owner = master->getPlayer();  
+		if (!owner || owner == getPlayer() || isPartner(owner) || isGuildMate(owner)) {  
+			return true;  
+		}  
+  
+		return canCombat(owner);  
+	} else if (const auto &player = creature->getPlayer()) {  
+		if (player->getGroup()->access) {  
+			return false;  
+		}  
+  
+		// Cannot attack party/guild members in any mode  
+		if (isPartner(player) || isGuildMate(player)) {  
+			return false;  
+		}  
+  
+		// Apply PvP mode rules  
+		bool canAttackByMode = false;  
+		switch (pvpMode) {  
+			case PVP_MODE_DOVE: {  
+				// Dove: Only attack those who have attacked you  
+				canAttackByMode = hasAttacked(player) || player->hasAttacked(std::const_pointer_cast<Player>(static_self_cast<Player>()));  
+				break;  
+			}  
+  
+			case PVP_MODE_WHITE_HAND: {  
+				// White Hand: Attack those who attacked you OR your party/guild members  
+				canAttackByMode = isAggressiveCreature(player, true); // guildAndParty = true  
+				break;  
+			}  
+  
+			case PVP_MODE_YELLOW_HAND: {  
+				// Yellow Hand: Attack any player with skull (except party/guild)  
+				canAttackByMode = player->getSkull() != SKULL_NONE;  
+				break;  
+			}  
+  
+			case PVP_MODE_RED_FIST: {  
+				// Red Fist: Attack everyone (except party/guild)  
+				canAttackByMode = true;  
+				break;  
+			}  
+  
+			default:  
+				canAttackByMode = false;  
+				break;  
+		}  
 
-	if (const auto &monster = creature->getMonster()) {
-		if (!monster->isSummon()) {
-			return true;
-		}
-
-		const auto master = monster->getMaster();
-		if (!master) {
-			return true;
-		}
-
-		auto owner = master->getPlayer();
-		if (!owner || owner == getPlayer() || isPartner(owner) || isGuildMate(owner)) {
-			return true;
-		}
-
-		return canCombat(owner);
-	} else if (const auto &player = creature->getPlayer()) {
-		if (player->getGroup()->access) {
-			return false;
-		}
-
-		// Cannot attack party/guild members in any mode
-		if (isPartner(player) || isGuildMate(player)) {
-			return false;
-		}
-
-		// Apply PvP mode rules
-		switch (pvpMode) {
-			case PVP_MODE_DOVE: {
-				// Dove: Only attack those who have attacked you
-				return hasAttacked(player) || player->hasAttacked(std::const_pointer_cast<Player>(static_self_cast<Player>()));
-			}
-
-			case PVP_MODE_WHITE_HAND: {
-				// White Hand: Attack those who attacked you OR your party/guild members
-				return isAggressiveCreature(player, true); // guildAndParty = true
-			}
-
-			case PVP_MODE_YELLOW_HAND: {
-				// Yellow Hand: Attack any player with skull (except party/guild)
-				return player->getSkull() != SKULL_NONE;
-			}
-
-			case PVP_MODE_RED_FIST: {
-				// Red Fist: Attack everyone (except party/guild)
-				return true;
-			}
-
-			default:
-				return false;
-		}
-	}
-
-	return false;
+		if (!hasSecureMode()) {  
+			return true;  
+		}  
+  
+		return canAttackByMode;  
+	}  
+  
+	return false;  
 }
 
-bool Player::canWalkthrough(const std::shared_ptr<Creature> &creature) {
-	if (group->access || creature->isInGhostMode()) {
-		return true;
-	}
-
-	bool expertPvpWalkThrough = g_configManager().getBoolean(TOGGLE_EXPERT_PVP) && g_configManager().getBoolean(EXPERT_PVP_CANWALKTHROUGHOTHERPLAYERS);
-	const auto &player = creature->getPlayer();
-	if (!player) {
-		if (expertPvpWalkThrough) {
-			if (const auto &monster = creature->getMonster()) {
-				const auto master = monster->getMaster();
-				if (!monster->isSummon() || !master || !master->getPlayer()) {
-					return false;
-				}
-
-				const auto owner = master->getPlayer();
-				return owner != getPlayer() && canWalkthrough(owner);
-			}
-		}
-		return false;
-	}
-
-	const auto &monster = creature->getMonster();
-	const auto &npc = creature->getNpc();
-	bool noPvpThroughAtSummon = false;
-	// Allow players to walk through summons in no pvp worlds
-	if (g_game().getWorldType() == WORLD_TYPE_NO_PVP) {
-		const auto &monsterMaster = monster ? monster->getMaster() : nullptr;
-		const auto &monsterMasterPlayer = monsterMaster ? monsterMaster->getPlayer() : nullptr;
-		if (monsterMasterPlayer) {
-			noPvpThroughAtSummon = true;
-		}
-	}
-
-	if (monster && (monster->isFamiliar() || noPvpThroughAtSummon)) {
-		return true;
-	}
-
-	if (player) {
-		const auto &playerTile = player->getTile();
-		if (!playerTile || (!playerTile->hasFlag(TILESTATE_NOPVPZONE) && !playerTile->hasFlag(TILESTATE_PROTECTIONZONE) && player->getLevel() > static_cast<uint32_t>(g_configManager().getNumber(PROTECTION_LEVEL)) && g_game().getWorldType() != WORLD_TYPE_NO_PVP)) {
-			return false;
-		}
-
-		const auto &playerTileGround = playerTile->getGround();
-		if (!playerTileGround || !playerTileGround->hasWalkStack()) {
-			return false;
-		}
-
-		const auto &thisPlayer = getPlayer();
-		if ((OTSYS_TIME() - lastWalkthroughAttempt) > 2000) {
-			thisPlayer->setLastWalkthroughAttempt(OTSYS_TIME());
-			return false;
-		}
-
-		if (creature->getPosition() != lastWalkthroughPosition) {
-			thisPlayer->setLastWalkthroughPosition(creature->getPosition());
-			return false;
-		}
-
-		thisPlayer->setLastWalkthroughPosition(creature->getPosition());
-		return true;
-	} else if (npc) {
-		const auto &tile = npc->getTile();
-		const auto &house = tile ? tile->getHouse() : nullptr;
-		return (house != nullptr);
-	}
-
-	return false;
+bool Player::canWalkthrough(const std::shared_ptr<Creature> &creature) {  
+	if (group->access || creature->isInGhostMode()) {  
+		return true;  
+	}  
+  
+	bool expertPvpWalkThrough = g_configManager().getBoolean(TOGGLE_EXPERT_PVP) && g_configManager().getBoolean(EXPERT_PVP_CANWALKTHROUGHOTHERPLAYERS);  
+	const auto &player = creature->getPlayer();  
+	if (!player) {  
+		if (expertPvpWalkThrough) {  
+			if (const auto &monster = creature->getMonster()) {  
+				const auto master = monster->getMaster();  
+				if (!monster->isSummon() || !master || !master->getPlayer()) {  
+					return false;  
+				}  
+  
+				const auto owner = master->getPlayer();  
+				return owner != getPlayer() && canWalkthrough(owner);  
+			}  
+		}  
+		return false;  
+	}  
+  
+	if (expertPvpWalkThrough && player) {  
+		bool hasPvpSituation = hasAttacked(player) || player->hasAttacked(std::const_pointer_cast<Player>(static_self_cast<Player>()));  
+		if (!hasPvpSituation) {  
+			return true;  
+		}  
+	}  
+  
+	const auto &monster = creature->getMonster();  
+	const auto &npc = creature->getNpc();  
+	bool noPvpThroughAtSummon = false;  
+	// Allow players to walk through summons in no pvp worlds  
+	if (g_game().getWorldType() == WORLD_TYPE_NO_PVP) {  
+		const auto &monsterMaster = monster ? monster->getMaster() : nullptr;  
+		const auto &monsterMasterPlayer = monsterMaster ? monsterMaster->getPlayer() : nullptr;  
+		if (monsterMasterPlayer) {  
+			noPvpThroughAtSummon = true;  
+		}  
+	}  
+  
+	if (monster && (monster->isFamiliar() || noPvpThroughAtSummon)) {  
+		return true;  
+	}  
+  
+	if (player) {  
+		const auto &playerTile = player->getTile();  
+		if (!playerTile || (!playerTile->hasFlag(TILESTATE_NOPVPZONE) && !playerTile->hasFlag(TILESTATE_PROTECTIONZONE) && player->getLevel() > static_cast<uint32_t>(g_configManager().getNumber(PROTECTION_LEVEL)) && g_game().getWorldType() != WORLD_TYPE_NO_PVP)) {  
+			return false;  
+		}  
+  
+		const auto &playerTileGround = playerTile->getGround();  
+		if (!playerTileGround || !playerTileGround->hasWalkStack()) {  
+			return false;  
+		}  
+  
+		const auto &thisPlayer = getPlayer();  
+		if ((OTSYS_TIME() - lastWalkthroughAttempt) > 2000) {  
+			thisPlayer->setLastWalkthroughAttempt(OTSYS_TIME());  
+			return false;  
+		}  
+  
+		if (creature->getPosition() != lastWalkthroughPosition) {  
+			thisPlayer->setLastWalkthroughPosition(creature->getPosition());  
+			return false;  
+		}  
+  
+		thisPlayer->setLastWalkthroughPosition(creature->getPosition());  
+		return true;  
+	} else if (npc) {  
+		const auto &tile = npc->getTile();  
+		const auto &house = tile ? tile->getHouse() : nullptr;  
+		return (house != nullptr);  
+	}  
+  
+	return false;  
 }
 
-bool Player::canWalkthroughEx(const std::shared_ptr<Creature> &creature) const {
-	if (group->access) {
-		return true;
-	}
+bool Player::canWalkthroughEx(const std::shared_ptr<Creature> &creature) const {  
+	if (group->access) {  
+		return true;  
+	}  
+  
+	const auto &monster = creature->getMonster();  
+	if (monster) {  
+		if (!monster->isFamiliar()) {  
+			return false;  
+		}  
+		return true;  
+	}  
+  
+	const auto &player = creature->getPlayer();  
+	const auto &npc = creature->getNpc();  
+	if (player) {  
+		const auto &playerTile = player->getTile();  
+		bool expertPvpWalkthrough = g_configManager().getBoolean(TOGGLE_EXPERT_PVP) && g_configManager().getBoolean(EXPERT_PVP_CANWALKTHROUGHOTHERPLAYERS);  
+		  
+		if (expertPvpWalkthrough) {  
+			if (!playerTile) {  
+				return false;  
+			}  
+			  
+			bool hasPvpSituation = hasAttacked(player) || player->hasAttacked(std::const_pointer_cast<Player>(static_self_cast<Player>()));  
 
-	const auto &monster = creature->getMonster();
-	if (monster) {
-		if (!monster->isFamiliar()) {
-			return false;
-		}
-		return true;
-	}
-
-	const auto &player = creature->getPlayer();
-	const auto &npc = creature->getNpc();
-	if (player) {
-		const auto &playerTile = player->getTile();
-		if (g_configManager().getBoolean(TOGGLE_EXPERT_PVP) && g_configManager().getBoolean(EXPERT_PVP_CANWALKTHROUGHOTHERPLAYERS)) {
-			return playerTile != nullptr;
-		} else {
-			return playerTile && (playerTile->hasFlag(TILESTATE_NOPVPZONE) || playerTile->hasFlag(TILESTATE_PROTECTIONZONE) || player->getLevel() <= static_cast<uint32_t>(g_configManager().getNumber(PROTECTION_LEVEL)) || g_game().getWorldType() == WORLD_TYPE_NO_PVP);
-		}
-	} else if (npc) {
-		const auto &tile = npc->getTile();
-		const auto &houseTile = std::dynamic_pointer_cast<HouseTile>(tile);
-		return (houseTile != nullptr);
-	} else {
-		return false;
-	}
+			return !hasPvpSituation;  
+		} else {  
+			return playerTile && (playerTile->hasFlag(TILESTATE_NOPVPZONE) || playerTile->hasFlag(TILESTATE_PROTECTIONZONE) || player->getLevel() <= static_cast<uint32_t>(g_configManager().getNumber(PROTECTION_LEVEL)) || g_game().getWorldType() == WORLD_TYPE_NO_PVP);  
+		}  
+	} else if (npc) {  
+		const auto &tile = npc->getTile();  
+		const auto &houseTile = std::dynamic_pointer_cast<HouseTile>(tile);  
+		return (houseTile != nullptr);  
+	} else {  
+		return false;  
+	}  
 }
 
 RaceType_t Player::getRace() const {
@@ -2901,45 +2934,50 @@ void Player::applyImbuementScrollToItem(const uint16_t scrollId, const std::shar
 
 // inventory
 
-void Player::onChangeZone(ZoneType_t zone) {
-	if (zone == ZONE_PROTECTION) {
-		if (getAttackedCreature() && !hasFlag(PlayerFlags_t::IgnoreProtectionZone)) {
-			setAttackedCreature(nullptr);
-			onAttackedCreatureDisappear(false);
-		}
+void Player::onChangeZone(ZoneType_t zone) {  
+	if (zone == ZONE_PROTECTION) {  
+		if (getAttackedCreature() && !hasFlag(PlayerFlags_t::IgnoreProtectionZone)) {  
+			setAttackedCreature(nullptr);  
+			onAttackedCreatureDisappear(false);  
+		}  
+  
+		if (!g_configManager().getBoolean(TOGGLE_MOUNT_IN_PZ) && !group->access && isMounted()) {  
+			dismount();  
+			g_game().internalCreatureChangeOutfit(getPlayer(), defaultOutfit);  
+			wasMounted = true;  
+		}  
+	} else {  
+		int32_t ticks = g_configManager().getNumber(STAIRHOP_DELAY);  
+		if (ticks > 0) {  
+			if (const auto &condition = Condition::createCondition(CONDITIONID_DEFAULT, CONDITION_PACIFIED, ticks, 0)) {  
+				addCondition(condition);  
+			}  
+		}  
+		if (wasMounted) {  
+			toggleMount(true);  
+			wasMounted = false;  
+		}  
+	}  
+  
+	bool expertPvp = g_configManager().getBoolean(TOGGLE_EXPERT_PVP);  
+	bool expertPvpWalkThrough = g_configManager().getBoolean(EXPERT_PVP_CANWALKTHROUGHOTHERPLAYERS);  
+	if (!expertPvp || (expertPvp && !expertPvpWalkThrough)) {  
+		g_game().updateCreatureWalkthrough(static_self_cast<Player>());  
+	}  
+  
+	updateImbuementTrackerStats();  
+	wheel().onThink(true);  
+	wheel().sendGiftOfLifeCooldown();  
+	g_game().updateCreatureWalkthrough(static_self_cast<Player>());  
 
-		if (!g_configManager().getBoolean(TOGGLE_MOUNT_IN_PZ) && !group->access && isMounted()) {
-			dismount();
-			g_game().internalCreatureChangeOutfit(getPlayer(), defaultOutfit);
-			wasMounted = true;
-		}
-	} else {
-		int32_t ticks = g_configManager().getNumber(STAIRHOP_DELAY);
-		if (ticks > 0) {
-			if (const auto &condition = Condition::createCondition(CONDITIONID_DEFAULT, CONDITION_PACIFIED, ticks, 0)) {
-				addCondition(condition);
-			}
-		}
-		if (wasMounted) {
-			toggleMount(true);
-			wasMounted = false;
-		}
-	}
-
-	bool expertPvp = g_configManager().getBoolean(TOGGLE_EXPERT_PVP);
-	bool expertPvpWalkThrough = g_configManager().getBoolean(EXPERT_PVP_CANWALKTHROUGHOTHERPLAYERS);
-	if (!expertPvp || (expertPvp && !expertPvpWalkThrough)) {
-		g_game().updateCreatureWalkthrough(static_self_cast<Player>());
-	}
-
-	updateImbuementTrackerStats();
-	wheel().onThink(true);
-	wheel().sendGiftOfLifeCooldown();
-	g_game().updateCreatureWalkthrough(static_self_cast<Player>());
-	sendIcons();
-	g_events().eventPlayerOnChangeZone(static_self_cast<Player>(), zone);
-
-	g_callbacks().executeCallback(EventCallback_t::playerOnChangeZone, &EventCallback::playerOnChangeZone, getPlayer(), zone);
+	if (g_configManager().getBoolean(TOGGLE_EXPERT_PVP)) {  
+		g_game().updateCreatureSquare(static_self_cast<Player>());  
+	}  
+	  
+	sendIcons();  
+	g_events().eventPlayerOnChangeZone(static_self_cast<Player>(), zone);  
+  
+	g_callbacks().executeCallback(EventCallback_t::playerOnChangeZone, &EventCallback::playerOnChangeZone, getPlayer(), zone);  
 }
 
 void Player::onAttackedCreatureChangeZone(ZoneType_t zone) {
@@ -6372,7 +6410,7 @@ void Player::onAttackedCreature(const std::shared_ptr<Creature> &target) {
 			switch (pvpMode) {
 				case PVP_MODE_DOVE: {
 					// Dove: No pz lock, no yellow skull
-					shouldPzLock = false;
+					shouldPzLock = true;
 					shouldYellowSkull = false;
 					break;
 				}
@@ -6438,6 +6476,9 @@ void Player::onAttackedCreature(const std::shared_ptr<Creature> &target) {
 		if (!previousSituation) {
 			g_game().updateCreatureSquare(getPlayer());
 			g_game().updateCreatureSquare(targetPlayer);
+
+			g_game().updateCreatureWalkthrough(getPlayer());  
+			g_game().updateCreatureWalkthrough(targetPlayer); 
 		}
 	}
 

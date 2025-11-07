@@ -475,6 +475,8 @@ enum WeaponType_t : uint8_t {
 	WEAPON_AMMO,
 	WEAPON_MISSILE,
 	WEAPON_FIST,
+	WEAPON_STAFF,
+	WEAPON_DUAL_SWORD,	
 };
 
 enum Ammo_t : uint8_t {

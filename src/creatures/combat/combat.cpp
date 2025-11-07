@@ -291,64 +291,70 @@ ReturnValue Combat::canTargetCreature(const std::shared_ptr<Player> &player, con
 			return RETURNVALUE_YOUMAYNOTATTACKTHISPLAYER;
 		}
 
-		if (player->hasSecureMode() && !Combat::isInPvpZone(player, target) && player->getSkullClient(target->getPlayer()) == SKULL_NONE) {
-			return RETURNVALUE_TURNSECUREMODETOATTACKUNMARKEDPLAYERS;
-		}
+	if (player->hasSecureMode() && !Combat::isInPvpZone(player, target) && player->getSkullClient(target->getPlayer()) == SKULL_NONE && !player->canCombat(target->getPlayer())) {  
+		return RETURNVALUE_TURNSECUREMODETOATTACKUNMARKEDPLAYERS;  
+	}
 	}
 
 	return canDoCombat(player, target, true);
 }
 
-ReturnValue Combat::canDoCombat(const std::shared_ptr<Creature> &caster, const std::shared_ptr<Tile> &tile, bool aggressive) {
-	if (!aggressive || !tile) {
-		return RETURNVALUE_NOERROR;
-	}
-
-	if (tile->hasProperty(CONST_PROP_BLOCKPROJECTILE)) {
-		bool canThrow = false;
-
-		if (const auto fieldList = tile->getItemList()) {
-			for (const auto &findfield : *fieldList) {
-				if (findfield && (findfield->getID() == ITEM_MAGICWALL || findfield->getID() == ITEM_MAGICWALL_SAFE)) {
-					canThrow = true;
-					break;
-				}
-			}
-		}
-
-		if (!canThrow) {
-			return RETURNVALUE_CANNOTTHROW;
-		}
-	}
-
-	if (aggressive && tile->hasFlag(TILESTATE_PROTECTIONZONE)) {
-		return RETURNVALUE_ACTIONNOTPERMITTEDINPROTECTIONZONE;
-	}
-
-	if (tile->getTeleportItem()) {
-		return RETURNVALUE_CANNOTTHROW;
-	}
-
-	if (caster) {
-		const Position &casterPosition = caster->getPosition();
-		const Position &tilePosition = tile->getPosition();
-		if (casterPosition.z < tilePosition.z) {
-			return RETURNVALUE_FIRSTGODOWNSTAIRS;
-		} else if (casterPosition.z > tilePosition.z) {
-			return RETURNVALUE_FIRSTGOUPSTAIRS;
-		}
-
-		if (const auto &player = caster->getPlayer()) {
-			if (player->hasFlag(PlayerFlags_t::IgnoreProtectionZone)) {
-				return RETURNVALUE_NOERROR;
-			}
-		}
-	}
-	ReturnValue ret = g_events().eventCreatureOnAreaCombat(caster, tile, aggressive);
-	if (ret == RETURNVALUE_NOERROR) {
-		ret = g_callbacks().checkCallbackWithReturnValue(EventCallback_t::creatureOnTargetCombat, &EventCallback::creatureOnAreaCombat, caster, tile, aggressive);
-	}
-	return ret;
+ReturnValue Combat::canDoCombat(const std::shared_ptr<Creature> &caster, const std::shared_ptr<Tile> &tile, bool aggressive) {  
+	if (!aggressive || !tile) {  
+		return RETURNVALUE_NOERROR;  
+	}  
+  
+	if (tile->hasProperty(CONST_PROP_BLOCKPROJECTILE)) {  
+		bool canThrow = false;  
+  
+		// NUEVO: Verificar configuración de Expert PvP  
+		if (g_configManager().getBoolean(TOGGLE_EXPERT_PVP) && g_configManager().getBoolean(EXPERT_PVP_CANWALKTHROUGHMAGICWALLS)) {  
+			canThrow = true;  
+		} else {  
+			// Lógica original: verificar si hay magic wall en el tile  
+			if (const auto fieldList = tile->getItemList()) {  
+				for (const auto &findfield : *fieldList) {  
+					if (findfield && (findfield->getID() == ITEM_MAGICWALL || findfield->getID() == ITEM_MAGICWALL_SAFE)) {  
+						canThrow = true;  
+						break;  
+					}  
+				}  
+			}  
+		}  
+  
+		if (!canThrow) {  
+			return RETURNVALUE_CANNOTTHROW;  
+		}  
+	}  
+  
+	if (aggressive && tile->hasFlag(TILESTATE_PROTECTIONZONE)) {  
+		return RETURNVALUE_ACTIONNOTPERMITTEDINPROTECTIONZONE;  
+	}  
+  
+	if (tile->getTeleportItem()) {  
+		return RETURNVALUE_CANNOTTHROW;  
+	}  
+  
+	if (caster) {  
+		const Position &casterPosition = caster->getPosition();  
+		const Position &tilePosition = tile->getPosition();  
+		if (casterPosition.z < tilePosition.z) {  
+			return RETURNVALUE_FIRSTGODOWNSTAIRS;  
+		} else if (casterPosition.z > tilePosition.z) {  
+			return RETURNVALUE_FIRSTGOUPSTAIRS;  
+		}  
+  
+		if (const auto &player = caster->getPlayer()) {  
+			if (player->hasFlag(PlayerFlags_t::IgnoreProtectionZone)) {  
+				return RETURNVALUE_NOERROR;  
+			}  
+		}  
+	}  
+	ReturnValue ret = g_events().eventCreatureOnAreaCombat(caster, tile, aggressive);  
+	if (ret == RETURNVALUE_NOERROR) {  
+		ret = g_callbacks().checkCallbackWithReturnValue(EventCallback_t::creatureOnTargetCombat, &EventCallback::creatureOnAreaCombat, caster, tile, aggressive);  
+	}  
+	return ret;  
 }
 
 bool Combat::isInPvpZone(const std::shared_ptr<Creature> &attacker, const std::shared_ptr<Creature> &target) {
@@ -2419,12 +2425,15 @@ void AreaCombat::setupExtArea(const std::list<uint32_t> &list, uint32_t rows) {
 
 //**********************************************************//
 
-void MagicField::onStepInField(const std::shared_ptr<Creature> &creature) {  
-	const auto &target = g_game().getOwnerPlayer(creature);
-	if (target && !isAggressive(target)) {
-		return;
-	}
+void MagicField::onStepInField(const std::shared_ptr<Creature> &creature) {    
+    const auto &target = creature->getPlayer();
+    if (target && !isAggressive(target)) {  
+        return;  
+    }  
 
+	bool canWalkthroughMagicWalls = g_configManager().getBoolean(TOGGLE_EXPERT_PVP) &&   
+	                                 g_configManager().getBoolean(EXPERT_PVP_CANWALKTHROUGHMAGICWALLS);  
+	
 	// remove magic walls/wild growth  
 	if ((!isBlocking() && g_game().getWorldType() == WORLD_TYPE_NO_PVP && id == ITEM_MAGICWALL_SAFE) || id == ITEM_WILDGROWTH_SAFE) {  
 		if (!creature->isInGhostMode()) {  
@@ -2700,17 +2709,30 @@ int32_t MagicField::getDamage() const {
 	return 0;
 }
 
-bool MagicField::isAggressive(const std::shared_ptr<Player> &player) const {
-	if (!g_configManager().getBoolean(TOGGLE_EXPERT_PVP) && g_configManager().getBoolean(EXPERT_PVP_CANWALKTHROUGHMAGICWALLS)) {
-		return true;
-	}
+bool MagicField::isAggressive(const std::shared_ptr<Player> &player) const {  
+    if (!g_configManager().getBoolean(TOGGLE_EXPERT_PVP) ||   
+        !g_configManager().getBoolean(EXPERT_PVP_CANWALKTHROUGHMAGICWALLS)) {  
+        return true;  
+    }  
 
-	const auto &caster = g_game().getOwnerPlayer(getOwnerId());
-	if (!caster || pvpMode == PVP_MODE_RED_FIST) {
-		return true;
-	}
+	const auto &caster = g_game().getPlayerByGUID(getOwnerId());  
+    if (!caster) {  
+        return true;  
+    }  
+      
+    if (pvpMode == PVP_MODE_RED_FIST) {  
+        return true;  
+    }  
 
-	return caster->isAggressiveCreature(player, pvpMode == PVP_MODE_WHITE_HAND, createTime) || pvpMode == PVP_MODE_YELLOW_HAND && player->getSkull() != SKULL_NONE;
+    if (caster == player) {  
+        return true;  
+    }  
+
+    if (caster->isAggressiveCreature(player, pvpMode == PVP_MODE_WHITE_HAND, createTime)) {  
+        return true;  
+    }  
+
+    return false;  
 }
 
 MatrixArea::MatrixArea(uint32_t initRows, uint32_t initCols) :

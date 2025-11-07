@@ -590,267 +590,308 @@ void Tile::onUpdateTile(const CreatureVector &spectators) {
 	}
 }
 
-ReturnValue Tile::queryAdd(int32_t, const std::shared_ptr<Thing> &thing, uint32_t, uint32_t tileFlags, const std::shared_ptr<Creature> &) {
-	if (!thing) {
-		return RETURNVALUE_NOTPOSSIBLE;
-	}
-
-	if (hasBitSet(FLAG_NOLIMIT, tileFlags)) {
-		return RETURNVALUE_NOERROR;
-	}
-
-	if (const auto &creature = thing->getCreature()) {
-		if (creature->getNpc()) {
-			const ReturnValue returnValue = checkNpcCanWalkIntoTile();
-			if (returnValue != RETURNVALUE_NOERROR) {
-				return returnValue;
-			}
-		}
-
-		if (hasBitSet(FLAG_PATHFINDING, tileFlags) && hasFlag(TILESTATE_FLOORCHANGE | TILESTATE_TELEPORT)) {
-			return RETURNVALUE_NOTPOSSIBLE;
-		}
-
-		if (creature->isMoveLocked() || ground == nullptr) {
-			return RETURNVALUE_NOTPOSSIBLE;
-		}
-
-		if (const auto &monster = creature->getMonster()) {
-			if (hasFlag(TILESTATE_PROTECTIONZONE | TILESTATE_FLOORCHANGE | TILESTATE_TELEPORT) && (!monster->isFamiliar() || (monster->isFamiliar() && monster->getMaster() && monster->getMaster()->getAttackedCreature()))) {
-				return RETURNVALUE_NOTPOSSIBLE;
-			}
-
-			if (monster->isSummon()) {
-				if (ground->getID() >= ITEM_WALKABLE_SEA_START && ground->getID() <= ITEM_WALKABLE_SEA_END) {
-					return RETURNVALUE_NOTPOSSIBLE;
-				}
-			}
-
-			const CreatureVector* creatures = getCreatures();
-			if (monster->canPushCreatures() && !monster->isSummon()) {
-				if (creatures) {
-					for (const auto &tileCreature : *creatures) {
-						if (tileCreature->getPlayer() && tileCreature->getPlayer()->isInGhostMode()) {
-							continue;
-						}
-
-						const auto &creatureMonster = tileCreature->getMonster();
-						if (!creatureMonster || !tileCreature->isPushable() || (creatureMonster->isSummon() && creatureMonster->getMaster()->getPlayer())) {
-							return RETURNVALUE_NOTPOSSIBLE;
-						}
-					}
-				}
-			} else if (creatures && !creatures->empty()) {
-				for (const auto &tileCreature : *creatures) {
-					if (!tileCreature->isInGhostMode()) {
-						return RETURNVALUE_NOTENOUGHROOM;
-					}
-				}
-			}
-
-			if (hasFlag(TILESTATE_IMMOVABLEBLOCKSOLID)) {
-				return RETURNVALUE_NOTPOSSIBLE;
-			}
-
-			if (hasBitSet(FLAG_PATHFINDING, tileFlags) && hasFlag(TILESTATE_IMMOVABLENOFIELDBLOCKPATH)) {
-				return RETURNVALUE_NOTPOSSIBLE;
-			}
-
-			if (hasFlag(TILESTATE_BLOCKSOLID) || (hasBitSet(FLAG_PATHFINDING, tileFlags) && hasFlag(TILESTATE_NOFIELDBLOCKPATH))) {
-				if (!(monster->canPushItems() || hasBitSet(FLAG_IGNOREBLOCKITEM, tileFlags))) {
-					return RETURNVALUE_NOTPOSSIBLE;
-				}
-			}
-
-			if (hasHarmfulField()) {
-				const CombatType_t combatType = getFieldItem()->getCombatType();
-
-				// There is 3 options for a monster to enter a magic field
-				// 1) Monster is immune
-				if (!monster->isImmune(combatType)) {
-					// 1) Monster is able to walk over field type
-					// 2) Being attacked while random stepping will make it ignore field damages
-					if (hasBitSet(FLAG_IGNOREFIELDDAMAGE, tileFlags)) {
-						if (!(monster->getIgnoreFieldDamage() || monster->canWalkOnFieldType(combatType))) {
-							return RETURNVALUE_NOTPOSSIBLE;
-						}
-					} else {
-						return RETURNVALUE_NOTPOSSIBLE;
-					}
-				}
-			}
-
-			return RETURNVALUE_NOERROR;
-		}
-
-		const CreatureVector* creatures = getCreatures();
-		if (const auto &player = creature->getPlayer()) {
-			if (creatures && !creatures->empty() && !hasBitSet(FLAG_IGNOREBLOCKCREATURE, tileFlags) && !player->isAccessPlayer()) {
-				for (const auto &tileCreature : *creatures) {
-					if (!player->canWalkthrough(tileCreature)) {
-						return RETURNVALUE_NOTPOSSIBLE;
-					}
-				}
-			}
-
-			if (hasBitSet(FLAG_PATHFINDING, tileFlags) && hasFlag(TILESTATE_BLOCKPATH)) {
-				return RETURNVALUE_NOTPOSSIBLE;
-			}
-
-			if (player->getParent() == nullptr && hasFlag(TILESTATE_NOLOGOUT)) {
-				// player is trying to login to a "no logout" tile
-				return RETURNVALUE_NOTPOSSIBLE;
-			}
-
-			const auto playerTile = player->getTile();
-			// moving from a pz tile to a non-pz tile
-			if (playerTile && playerTile->hasFlag(TILESTATE_PROTECTIONZONE)) {
-				auto maxOnline = g_configManager().getNumber(MAX_PLAYERS_PER_ACCOUNT);
-				if (maxOnline > 1 && player->getAccountType() < ACCOUNT_TYPE_GAMEMASTER && !hasFlag(TILESTATE_PROTECTIONZONE)) {
-					const auto maxOutsizePZ = g_configManager().getNumber(MAX_PLAYERS_OUTSIDE_PZ_PER_ACCOUNT);
-					auto accountPlayers = g_game().getPlayersByAccount(player->getAccount());
-					int countOutsizePZ = 0;
-					for (const auto &accountPlayer : accountPlayers) {
-						if (accountPlayer == player || accountPlayer->isOffline()) {
-							continue;
-						}
-						if (accountPlayer->getTile() && !accountPlayer->getTile()->hasFlag(TILESTATE_PROTECTIONZONE)) {
-							++countOutsizePZ;
-						}
-					}
-					if (countOutsizePZ >= maxOutsizePZ) {
-						player->sendCreatureSay(player, TALKTYPE_MONSTER_SAY, fmt::format("You can only have {} character{} from your account outside of a protection zone.", maxOutsizePZ == 1 ? "one" : std::to_string(maxOutsizePZ), maxOutsizePZ > 1 ? "s" : ""), &getPosition());
-						return RETURNVALUE_NOTPOSSIBLE;
-					}
-				}
-			}
-			if (playerTile && player->isPzLocked()) {
-				if (!playerTile->hasFlag(TILESTATE_PVPZONE)) {
-					// player is trying to enter a pvp zone while being pz-locked
-					if (hasFlag(TILESTATE_PVPZONE)) {
-						return RETURNVALUE_PLAYERISPZLOCKEDENTERPVPZONE;
-					}
-				} else if (!hasFlag(TILESTATE_PVPZONE)) {
-					// player is trying to leave a pvp zone while being pz-locked
-					return RETURNVALUE_PLAYERISPZLOCKEDLEAVEPVPZONE;
-				}
-
-				if ((!playerTile->hasFlag(TILESTATE_NOPVPZONE) && hasFlag(TILESTATE_NOPVPZONE)) || (!playerTile->hasFlag(TILESTATE_PROTECTIONZONE) && hasFlag(TILESTATE_PROTECTIONZONE))) {
-					// player is trying to enter a non-pvp/protection zone while being pz-locked
-					return RETURNVALUE_PLAYERISPZLOCKED;
-				}
-			}
-		} else if (creatures && !creatures->empty() && !hasBitSet(FLAG_IGNOREBLOCKCREATURE, tileFlags)) {
-			for (const auto &tileCreature : *creatures) {
-				if (!tileCreature->isInGhostMode()) {
-					return RETURNVALUE_NOTENOUGHROOM;
-				}
-			}
-		}
-
-		if (!hasBitSet(FLAG_IGNOREBLOCKITEM, tileFlags)) {
-			// If the FLAG_IGNOREBLOCKITEM bit isn't set we dont have to iterate every single item
-			if (hasFlag(TILESTATE_BLOCKSOLID)) {
-				// NO PVP magic wall or wild growth field check
-				if (creature && creature->getPlayer()) {
-					if (const auto fieldList = getItemList()) {
-						for (const auto &findfield : *fieldList) {
-							if (findfield && (findfield->getID() == ITEM_WILDGROWTH_SAFE || findfield->getID() == ITEM_MAGICWALL_SAFE)) {
-								if (!creature->isInGhostMode()) {
-									g_game().internalRemoveItem(findfield, 1);
-								}
-								return RETURNVALUE_NOERROR;
-							}
-						}
-					}
-				}
-				return RETURNVALUE_NOTENOUGHROOM;
-			}
-		} else {
-			// FLAG_IGNOREBLOCKITEM is set
-			if (ground) {
-				const ItemType &iiType = Item::items[ground->getID()];
-				if (iiType.blockSolid && (!iiType.movable || ground->hasAttribute(ItemAttribute_t::UNIQUEID))) {
-					return RETURNVALUE_NOTPOSSIBLE;
-				}
-			}
-
-			if (const auto items = getItemList()) {
-				for (const auto &item : *items) {
-					const ItemType &iiType = Item::items[item->getID()];
-					if (iiType.blockSolid && (!iiType.movable || item->hasAttribute(ItemAttribute_t::UNIQUEID))) {
-						return RETURNVALUE_NOTPOSSIBLE;
-					}
-				}
-			}
-		}
-	} else if (const auto &item = thing->getItem()) {
-		const TileItemVector* items = getItemList();
-		if (items && items->size() >= 0x3E8) {
-			return RETURNVALUE_NOTPOSSIBLE;
-		}
-
-		const bool itemIsHangable = item->isHangable();
-		if (ground == nullptr && !itemIsHangable) {
-			return RETURNVALUE_NOTPOSSIBLE;
-		}
-
-		const CreatureVector* creatures = getCreatures();
-		if (creatures && !creatures->empty() && item->isBlocking() && !hasBitSet(FLAG_IGNOREBLOCKCREATURE, tileFlags)) {
-			for (const auto &tileCreature : *creatures) {
-				if (!tileCreature->isInGhostMode()) {
-					return RETURNVALUE_NOTENOUGHROOM;
-				}
-			}
-		}
-
-		if (itemIsHangable && hasFlag(TILESTATE_SUPPORTS_HANGABLE)) {
-			if (items) {
-				for (const auto &tileItem : *items) {
-					if (tileItem->isHangable()) {
-						return RETURNVALUE_NEEDEXCHANGE;
-					}
-				}
-			}
-		} else {
-			if (ground) {
-				const ItemType &iiType = Item::items[ground->getID()];
-				if (iiType.blockSolid) {
-					if ((!iiType.pickupable && iiType.type != ITEM_TYPE_TRASHHOLDER) || item->isMagicField() || item->isBlocking()) {
-						if (!item->isPickupable() && !item->isCarpet()) {
-							return RETURNVALUE_NOTENOUGHROOM;
-						}
-
-						if (!iiType.hasHeight) {
-							return RETURNVALUE_NOTENOUGHROOM;
-						}
-					}
-				}
-			}
-
-			if (items) {
-				for (const auto &tileItem : *items) {
-					const ItemType &iiType = Item::items[tileItem->getID()];
-					if (!iiType.blockSolid || iiType.type == ITEM_TYPE_TRASHHOLDER) {
-						continue;
-					}
-
-					if (iiType.pickupable && !item->isMagicField() && !item->isBlocking()) {
-						continue;
-					}
-
-					if (!item->isPickupable()) {
-						return RETURNVALUE_NOTENOUGHROOM;
-					}
-
-					if (!iiType.hasHeight || iiType.pickupable) {
-						return RETURNVALUE_NOTENOUGHROOM;
-					}
-				}
-			}
-		}
-	}
-	return RETURNVALUE_NOERROR;
+ReturnValue Tile::queryAdd(int32_t, const std::shared_ptr<Thing> &thing, uint32_t, uint32_t tileFlags, const std::shared_ptr<Creature> &) {  
+	if (!thing) {  
+		return RETURNVALUE_NOTPOSSIBLE;  
+	}  
+  
+	if (hasBitSet(FLAG_NOLIMIT, tileFlags)) {  
+		return RETURNVALUE_NOERROR;  
+	}  
+  
+	if (const auto &creature = thing->getCreature()) {  
+		if (creature->getNpc()) {  
+			const ReturnValue returnValue = checkNpcCanWalkIntoTile();  
+			if (returnValue != RETURNVALUE_NOERROR) {  
+				return returnValue;  
+			}  
+		}  
+  
+		if (hasBitSet(FLAG_PATHFINDING, tileFlags) && hasFlag(TILESTATE_FLOORCHANGE | TILESTATE_TELEPORT)) {  
+			return RETURNVALUE_NOTPOSSIBLE;  
+		}  
+  
+		if (creature->isMoveLocked() || ground == nullptr) {  
+			return RETURNVALUE_NOTPOSSIBLE;  
+		}  
+  
+		if (const auto &monster = creature->getMonster()) {  
+			if (hasFlag(TILESTATE_PROTECTIONZONE | TILESTATE_FLOORCHANGE | TILESTATE_TELEPORT) && (!monster->isFamiliar() || (monster->isFamiliar() && monster->getMaster() && monster->getMaster()->getAttackedCreature()))) {  
+				return RETURNVALUE_NOTPOSSIBLE;  
+			}  
+  
+			if (monster->isSummon()) {  
+				if (ground->getID() >= ITEM_WALKABLE_SEA_START && ground->getID() <= ITEM_WALKABLE_SEA_END) {  
+					return RETURNVALUE_NOTPOSSIBLE;  
+				}  
+			}  
+  
+			const CreatureVector* creatures = getCreatures();  
+			if (monster->canPushCreatures() && !monster->isSummon()) {  
+				if (creatures) {  
+					for (const auto &tileCreature : *creatures) {  
+						if (tileCreature->getPlayer() && tileCreature->getPlayer()->isInGhostMode()) {  
+							continue;  
+						}  
+  
+						const auto &creatureMonster = tileCreature->getMonster();  
+						if (!creatureMonster || !tileCreature->isPushable() || (creatureMonster->isSummon() && creatureMonster->getMaster()->getPlayer())) {  
+							return RETURNVALUE_NOTPOSSIBLE;  
+						}  
+					}  
+				}  
+			} else if (creatures && !creatures->empty()) {  
+				for (const auto &tileCreature : *creatures) {  
+					if (!tileCreature->isInGhostMode()) {  
+						return RETURNVALUE_NOTENOUGHROOM;  
+					}  
+				}  
+			}  
+  
+			if (hasFlag(TILESTATE_IMMOVABLEBLOCKSOLID)) {  
+				return RETURNVALUE_NOTPOSSIBLE;  
+			}  
+  
+			if (hasBitSet(FLAG_PATHFINDING, tileFlags) && hasFlag(TILESTATE_IMMOVABLENOFIELDBLOCKPATH)) {  
+				return RETURNVALUE_NOTPOSSIBLE;  
+			}  
+  
+			if (hasFlag(TILESTATE_BLOCKSOLID) || (hasBitSet(FLAG_PATHFINDING, tileFlags) && hasFlag(TILESTATE_NOFIELDBLOCKPATH))) {  
+				if (!(monster->canPushItems() || hasBitSet(FLAG_IGNOREBLOCKITEM, tileFlags))) {  
+					return RETURNVALUE_NOTPOSSIBLE;  
+				}  
+			}  
+  
+			if (hasHarmfulField()) {  
+				const CombatType_t combatType = getFieldItem()->getCombatType();  
+  
+				// There is 3 options for a monster to enter a magic field  
+				// 1) Monster is immune  
+				if (!monster->isImmune(combatType)) {  
+					// 1) Monster is able to walk over field type  
+					// 2) Being attacked while random stepping will make it ignore field damages  
+					if (hasBitSet(FLAG_IGNOREFIELDDAMAGE, tileFlags)) {  
+						if (!(monster->getIgnoreFieldDamage() || monster->canWalkOnFieldType(combatType))) {  
+							return RETURNVALUE_NOTPOSSIBLE;  
+						}  
+					} else {  
+						return RETURNVALUE_NOTPOSSIBLE;  
+					}  
+				}  
+			}  
+  
+			return RETURNVALUE_NOERROR;  
+		}  
+  
+		const CreatureVector* creatures = getCreatures();  
+		if (const auto &player = creature->getPlayer()) {  
+			if (creatures && !creatures->empty() && !hasBitSet(FLAG_IGNOREBLOCKCREATURE, tileFlags) && !player->isAccessPlayer()) {  
+				for (const auto &tileCreature : *creatures) {  
+					if (!player->canWalkthrough(tileCreature)) {  
+						return RETURNVALUE_NOTPOSSIBLE;  
+					}  
+				}  
+			}  
+  
+			if (hasBitSet(FLAG_PATHFINDING, tileFlags) && hasFlag(TILESTATE_BLOCKPATH)) {  
+				return RETURNVALUE_NOTPOSSIBLE;  
+			}  
+  
+			if (player->getParent() == nullptr && hasFlag(TILESTATE_NOLOGOUT)) {  
+				// player is trying to login to a "no logout" tile  
+				return RETURNVALUE_NOTPOSSIBLE;  
+			}  
+  
+			const auto playerTile = player->getTile();  
+			// moving from a pz tile to a non-pz tile  
+			if (playerTile && playerTile->hasFlag(TILESTATE_PROTECTIONZONE)) {  
+				auto maxOnline = g_configManager().getNumber(MAX_PLAYERS_PER_ACCOUNT);  
+				if (maxOnline > 1 && player->getAccountType() < ACCOUNT_TYPE_GAMEMASTER && !hasFlag(TILESTATE_PROTECTIONZONE)) {  
+					const auto maxOutsizePZ = g_configManager().getNumber(MAX_PLAYERS_OUTSIDE_PZ_PER_ACCOUNT);  
+					auto accountPlayers = g_game().getPlayersByAccount(player->getAccount());  
+					int countOutsizePZ = 0;  
+					for (const auto &accountPlayer : accountPlayers) {  
+						if (accountPlayer == player || accountPlayer->isOffline()) {  
+							continue;  
+						}  
+						if (accountPlayer->getTile() && !accountPlayer->getTile()->hasFlag(TILESTATE_PROTECTIONZONE)) {  
+							++countOutsizePZ;  
+						}  
+					}  
+					if (countOutsizePZ >= maxOutsizePZ) {  
+						player->sendCreatureSay(player, TALKTYPE_MONSTER_SAY, fmt::format("You can only have {} character{} from your account outside of a protection zone.", maxOutsizePZ == 1 ? "one" : std::to_string(maxOutsizePZ), maxOutsizePZ > 1 ? "s" : ""), &getPosition());  
+						return RETURNVALUE_NOTPOSSIBLE;  
+					}  
+				}  
+			}  
+			if (playerTile && player->isPzLocked()) {  
+				if (!playerTile->hasFlag(TILESTATE_PVPZONE)) {  
+					// player is trying to enter a pvp zone while being pz-locked  
+					if (hasFlag(TILESTATE_PVPZONE)) {  
+						return RETURNVALUE_PLAYERISPZLOCKEDENTERPVPZONE;  
+					}  
+				} else if (!hasFlag(TILESTATE_PVPZONE)) {  
+					// player is trying to leave a pvp zone while being pz-locked  
+					return RETURNVALUE_PLAYERISPZLOCKEDLEAVEPVPZONE;  
+				}  
+  
+				if ((!playerTile->hasFlag(TILESTATE_NOPVPZONE) && hasFlag(TILESTATE_NOPVPZONE)) || (!playerTile->hasFlag(TILESTATE_PROTECTIONZONE) && hasFlag(TILESTATE_PROTECTIONZONE))) {  
+					// player is trying to enter a non-pvp/protection zone while being pz-locked  
+					return RETURNVALUE_PLAYERISPZLOCKED;  
+				}  
+			}  
+		} else if (creatures && !creatures->empty() && !hasBitSet(FLAG_IGNOREBLOCKCREATURE, tileFlags)) {  
+			for (const auto &tileCreature : *creatures) {  
+				if (!tileCreature->isInGhostMode()) {  
+					return RETURNVALUE_NOTENOUGHROOM;  
+				}  
+			}  
+		}  
+  
+		if (!hasBitSet(FLAG_IGNOREBLOCKITEM, tileFlags)) {  
+			if (hasFlag(TILESTATE_BLOCKSOLID)) {  
+				if (creature && creature->getPlayer()) {  
+					if (const auto fieldList = getItemList()) {  
+						for (const auto &findfield : *fieldList) {  
+							// Verificar walls SAFE primero  
+							if (findfield && (findfield->getID() == ITEM_WILDGROWTH_SAFE ||   
+											findfield->getID() == ITEM_MAGICWALL_SAFE)) {  
+								if (!creature->isInGhostMode()) {  
+									g_game().internalRemoveItem(findfield, 1);  
+								}  
+								return RETURNVALUE_NOERROR;  
+							}  
+							  
+							// Verificar magic walls y wild growth normales  
+							if (findfield && (findfield->getID() == ITEM_MAGICWALL ||   
+											findfield->getID() == ITEM_WILDGROWTH ||   
+											findfield->getID() == ITEM_FIREFIELD_PVP_FULL ||   
+											findfield->getID() == ITEM_FIREFIELD_PVP_MEDIUM ||   
+											findfield->getID() == ITEM_FIREFIELD_PVP_SMALL ||   
+											findfield->getID() == ITEM_ENERGYFIELD_PVP ||   
+											findfield->getID() == ITEM_POISONFIELD_PVP)) {  
+								const auto &magicField = findfield->getMagicField();  
+								if (magicField) {  
+									if (!magicField->isAggressive(creature->getPlayer())) {  
+										return RETURNVALUE_NOERROR;  
+									} else {  
+										return RETURNVALUE_NOTENOUGHROOM;  
+									}  
+								}  
+							}  
+						}  
+					}  
+				}  
+				return RETURNVALUE_NOTENOUGHROOM;  
+			}  
+		} else {  
+			// FLAG_IGNOREBLOCKITEM is set  
+			if (ground) {  
+				const ItemType &iiType = Item::items[ground->getID()];  
+				if (iiType.blockSolid && (!iiType.movable || ground->hasAttribute(ItemAttribute_t::UNIQUEID))) {  
+					return RETURNVALUE_NOTPOSSIBLE;  
+				}  
+			}  
+  
+			if (const auto items = getItemList()) {  
+				for (const auto &item : *items) {  
+					const ItemType &iiType = Item::items[item->getID()];  
+					if (iiType.blockSolid && (!iiType.movable || item->hasAttribute(ItemAttribute_t::UNIQUEID))) {  
+						return RETURNVALUE_NOTPOSSIBLE;  
+					}  
+				}  
+			}  
+		}  
+	} else if (const auto &item = thing->getItem()) {  
+		const TileItemVector* items = getItemList();  
+		if (items && items->size() >= 0x3E8) {  
+			return RETURNVALUE_NOTPOSSIBLE;  
+		}  
+  
+		// NUEVO: Verificar si se está agregando una magic wall o wild growth sobre otra  
+		if (item->getID() == ITEM_MAGICWALL || item->getID() == ITEM_WILDGROWTH) {  
+			if (items) {  
+				for (const auto &tileItem : *items) {  
+					if (tileItem->getID() == ITEM_MAGICWALL ||   
+						tileItem->getID() == ITEM_WILDGROWTH) {  
+						// Ya hay una wall, permitir apilar  
+						return RETURNVALUE_NOERROR;  
+					}  
+				}  
+			}  
+		}  
+  
+		const bool itemIsHangable = item->isHangable();  
+		if (ground == nullptr && !itemIsHangable) {  
+			return RETURNVALUE_NOTPOSSIBLE;  
+		}  
+  
+		const CreatureVector* creatures = getCreatures();  
+		if (creatures && !creatures->empty() && item->isBlocking() && !hasBitSet(FLAG_IGNOREBLOCKCREATURE, tileFlags)) {  
+			for (const auto &tileCreature : *creatures) {  
+				if (!tileCreature->isInGhostMode()) {  
+					return RETURNVALUE_NOTENOUGHROOM;  
+				}  
+			}  
+		}  
+  
+		if (itemIsHangable && hasFlag(TILESTATE_SUPPORTS_HANGABLE)) {  
+			if (items) {  
+				for (const auto &tileItem : *items) {  
+					if (tileItem->isHangable()) {  
+						return RETURNVALUE_NEEDEXCHANGE;  
+					}  
+				}  
+			}  
+		} else {  
+			if (ground) {  
+				const ItemType &iiType = Item::items[ground->getID()];  
+				if (iiType.blockSolid) {  
+					// MODIFICADO: Excluir magic walls y wild growth COMPLETAMENTE  
+					if (item->getID() == ITEM_MAGICWALL || item->getID() == ITEM_WILDGROWTH) {  
+						// Permitir agregar walls sin verificar blockSolid  
+					} else {  
+						if ((!iiType.pickupable && iiType.type != ITEM_TYPE_TRASHHOLDER) || item->isMagicField() || item->isBlocking()) {  
+							if (!item->isPickupable() && !item->isCarpet()) {  
+								return RETURNVALUE_NOTENOUGHROOM;  
+							}  
+							
+							if (!iiType.hasHeight) {  
+								return RETURNVALUE_NOTENOUGHROOM;  
+							}  
+						}  
+					}  
+				}   
+			}  
+  
+			if (items) {  
+				for (const auto &tileItem : *items) {  
+					const ItemType &iiType = Item::items[tileItem->getID()];  
+					if (!iiType.blockSolid || iiType.type == ITEM_TYPE_TRASHHOLDER) {  
+						continue;  
+					}  
+  
+					// MODIFICADO: Excluir magic walls y wild growth del loop  
+					if (item->getID() == ITEM_MAGICWALL || item->getID() == ITEM_WILDGROWTH) {  
+						continue;  
+					}  
+  
+					if (iiType.pickupable && !item->isMagicField() && !item->isBlocking()) {  
+						continue;  
+					}  
+  
+					if (!item->isPickupable()) {  
+						return RETURNVALUE_NOTENOUGHROOM;  
+					}  
+  
+					if (!iiType.hasHeight || iiType.pickupable) {  
+						return RETURNVALUE_NOTENOUGHROOM;  
+					}  
+				}  
+			}  
+		}  
+	}  
+	return RETURNVALUE_NOERROR;  
 }
 
 ReturnValue Tile::checkNpcCanWalkIntoTile() const {
@@ -1098,35 +1139,47 @@ void Tile::addThing(int32_t, const std::shared_ptr<Thing> &thing) {
 			}
 
 			onAddTileItem(item);
-		} else {
-			if (itemType.isMagicField()) {
-				// remove old field item if exists
-				if (items) {
-					for (auto it = items->getBeginDownItem(), end = items->getEndDownItem(); it != end; ++it) {
-						std::weak_ptr<Item> weakField = *it;
-						if (const auto oldField = weakField.lock()) {
-							auto magicField = oldField->getMagicField();
-							if (magicField) {
-								if (magicField->isReplaceable()) {
-									postRemoveNotification(magicField, nullptr, 0);
-									removeThing(magicField, 1);
-									magicField->resetParent();
-									break;
-								} else {
-									// This magic field cannot be replaced.
-									item->resetParent();
-									return;
-								}
-							}
-						}
-					}
-				}
-			}
-
-			items = makeItemList();
-			items->insert(items->getBeginDownItem(), item);
-			items->increaseDownItemCount();
-			onAddTileItem(item);
+		} else {  
+			if (itemType.isMagicField()) {  
+				// remove old field item if exists  
+				if (items) {  
+					for (auto it = items->getBeginDownItem(), end = items->getEndDownItem(); it != end; ++it) {  
+						std::weak_ptr<Item> weakField = *it;  
+						if (const auto oldField = weakField.lock()) {  
+							auto magicField = oldField->getMagicField();  
+							if (magicField) {  
+								uint16_t newItemId = item->getID();  
+								uint16_t oldItemId = oldField->getID();  
+								
+								bool isNewWall = (newItemId == ITEM_MAGICWALL || newItemId == ITEM_WILDGROWTH);  
+								bool isOldWall = (oldItemId == ITEM_MAGICWALL || oldItemId == ITEM_WILDGROWTH);  
+								
+								// Si ambos son walls (magic wall o wild growth), permitir apilar  
+								if (isNewWall && isOldWall) {  
+									break; // Salir del loop sin remover, permitiendo apilar  
+								}  
+								
+								// Para cualquier otro field, usar la lógica de reemplazo normal  
+								if (magicField->isReplaceable()) {  
+									postRemoveNotification(magicField, nullptr, 0);  
+									removeThing(magicField, 1);  
+									magicField->resetParent();  
+									break;  
+								} else {  
+									// This magic field cannot be replaced.  
+									item->resetParent();  
+									return;  
+								}  
+							}  
+						}  
+					}  
+				}  
+			}  
+		
+			items = makeItemList();  
+			items->insert(items->getBeginDownItem(), item);  
+			items->increaseDownItemCount();  
+			onAddTileItem(item);  
 		}
 	}
 }

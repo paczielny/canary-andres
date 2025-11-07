@@ -576,10 +576,35 @@ bool Spell::playerInstantSpellCheck(const std::shared_ptr<Player> &player, const
 		return false;
 	}
 
-	if (blockingSolid && tile->hasFlag(TILESTATE_BLOCKSOLID)) {
-		player->sendCancelMessage(RETURNVALUE_NOTENOUGHROOM);
-		g_game().addMagicEffect(player->getPosition(), CONST_ME_POFF);
-		return false;
+	if (blockingSolid && tile->hasFlag(TILESTATE_BLOCKSOLID)) {  
+		// Permitir apilar magic walls si la configuración está habilitada  
+		if (g_configManager().getBoolean(TOGGLE_EXPERT_PVP) &&   
+			g_configManager().getBoolean(EXPERT_PVP_CANWALKTHROUGHMAGICWALLS)) {  
+			// Verificar si hay magic walls en el tile  
+			bool hasMagicWall = false;  
+			if (const auto fieldList = tile->getItemList()) {  
+				for (const auto &field : *fieldList) {  
+					if (field && (field->getID() == ITEM_MAGICWALL ||   
+								field->getID() == ITEM_MAGICWALL_SAFE ||  
+								field->getID() == ITEM_WILDGROWTH ||  
+								field->getID() == ITEM_WILDGROWTH_SAFE)) {  
+						hasMagicWall = true;  
+						break;  
+					}  
+				}  
+			}  
+			
+			// Si hay magic walls, permitir el lanzamiento  
+			if (!hasMagicWall) {  
+				player->sendCancelMessage(RETURNVALUE_NOTENOUGHROOM);  
+				g_game().addMagicEffect(player->getPosition(), CONST_ME_POFF);  
+				return false;  
+			}  
+		} else {  
+			player->sendCancelMessage(RETURNVALUE_NOTENOUGHROOM);  
+			g_game().addMagicEffect(player->getPosition(), CONST_ME_POFF);  
+			return false;  
+		}  
 	}
 
 	return true;
@@ -627,10 +652,26 @@ bool Spell::playerRuneSpellCheck(const std::shared_ptr<Player> &player, const Po
 	}
 
 	const auto &topVisibleCreature = tile->getBottomVisibleCreature(player);
-	if ((blockingCreature && topVisibleCreature) || (blockingSolid && tile->hasFlag(TILESTATE_BLOCKSOLID) && !topVisibleCreature)) {
-		player->sendCancelMessage(RETURNVALUE_NOTENOUGHROOM);
-		g_game().addMagicEffect(player->getPosition(), CONST_ME_POFF);
-		return false;
+	if ((blockingCreature && topVisibleCreature) || (blockingSolid && tile->hasFlag(TILESTATE_BLOCKSOLID) && !topVisibleCreature)) {  
+		// Permitir apilar magic walls  
+		bool canStack = false;  
+		if (blockingSolid && !topVisibleCreature) {  
+			if (const auto fieldList = tile->getItemList()) {  
+				for (const auto &field : *fieldList) {  
+					if (field && (field->getID() == ITEM_MAGICWALL || field->getID() == ITEM_MAGICWALL_SAFE ||   
+								field->getID() == ITEM_WILDGROWTH || field->getID() == ITEM_WILDGROWTH_SAFE)) {  
+						canStack = true;  
+						break;  
+					}  
+				}  
+			}  
+		}  
+		
+		if (!canStack) {  
+			player->sendCancelMessage(RETURNVALUE_NOTENOUGHROOM);  
+			g_game().addMagicEffect(player->getPosition(), CONST_ME_POFF);  
+			return false;  
+		}  
 	}
 
 	if (needTarget && !topVisibleCreature) {

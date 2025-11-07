@@ -27190,7 +27190,7 @@
 	</item>
 	<item id="10389" article="a" name="traditional sai">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="dualsword" />
 		<attribute key="elementalbond" value="physical" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="28" />
@@ -27205,7 +27205,7 @@
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="30" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="dualsword" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
@@ -27232,7 +27232,7 @@
 	</item>
 	<item id="10391" article="a" name="drachaku">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="staff" />
 		<attribute key="elementalbond" value="energy" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="41" />
@@ -27247,7 +27247,7 @@
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="90" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="staff" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
@@ -83234,7 +83234,7 @@ Granted by TibiaGoals.com" />
 	</item>
 	<item id="50157" article="a" name="sanguine claws">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="dualsword" />
 		<attribute key="elementalbond" value="earth" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="47" />
@@ -83258,13 +83258,13 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="600" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="dualsword" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
 	<item id="50158" article="a" name="grand sanguine claws">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="dualsword" />
 		<attribute key="elementalbond" value="earth" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="47" />
@@ -83288,13 +83288,13 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="600" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="dualsword" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
 	<item id="50159" article="a" name="soulkamas">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="dualsword" />
 		<attribute key="elementalbond" value="energy" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="criticalhitchance" value="1000" />
@@ -83313,13 +83313,13 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="400" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="dualsword" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
 	<item id="50160" article="a" name="naga katar">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="dualsword" />
 		<attribute key="elementalbond" value="earth" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="44" />
@@ -83336,13 +83336,13 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="300" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="dualsword" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
 	<item id="50161" article="a" name="falcon sai">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="dualsword" />
 		<attribute key="elementalbond" value="physical" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="lifeleechamount" value="1400" />
@@ -83359,7 +83359,7 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="300" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="dualsword" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
@@ -83388,7 +83388,7 @@ Granted by TibiaGoals.com" />
 	</item>
 	<item id="50163" article="a" name="crude umbral katar">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="dualsword" />
 		<attribute key="elementalbond" value="physical" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="41" />
@@ -83398,13 +83398,13 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="75" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="dualsword" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
 	<item id="50164" article="an" name="umbral katar">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="dualsword" />
 		<attribute key="elementalbond" value="physical" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="42" />
@@ -83420,13 +83420,13 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="120" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="dualsword" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
 	<item id="50165" article="an" name="umbral master katar">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="dualsword" />
 		<attribute key="elementalbond" value="physical" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="43" />
@@ -83442,13 +83442,13 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="250" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="dualsword" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
 	<item id="50166" article="a" name="light jo staff">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="staff" />
 		<attribute key="elementalbond" value="energy" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="10" />
@@ -83456,13 +83456,13 @@ Granted by TibiaGoals.com" />
 		<attribute key="skillfist" value="1" />
 		<attribute key="weight" value="1700" />
 		<attribute key="script" value="moveevent;weapon">
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="staff" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
 	<item id="50167" article="a" name="cobra bo">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="staff" />
 		<attribute key="elementalbond" value="earth" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="44" />
@@ -83480,13 +83480,13 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="250" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="staff" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
 	<item id="50168" article="a" name="nunchaku of destruction">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="dualsword" />
 		<attribute key="elementalbond" value="physical" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="42" />
@@ -83501,13 +83501,13 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="200" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="dualsword" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
 	<item id="50169" article="an" name="eldritch crescent moon spade">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="staff" />
 		<attribute key="elementalbond" value="energy" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="44" />
@@ -83525,14 +83525,14 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="250" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="staff" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
 	<item id="50170" article="a" name="gilded eldritch crescent moon spade">
 		<attribute key="description" value="Refined by the legendary artisan Gnomaurum" />
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="staff" />
 		<attribute key="elementalbond" value="energy" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="44" />
@@ -83550,13 +83550,13 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="250" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="staff" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
 	<item id="50171" article="a" name="jo staff">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="staff" />
 		<attribute key="elementalbond" value="energy" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="18" />
@@ -83569,7 +83569,7 @@ Granted by TibiaGoals.com" />
 		</attribute>
 		<attribute key="weight" value="3500" />
 		<attribute key="script" value="moveevent;weapon">
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="staff" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
@@ -83619,7 +83619,7 @@ Granted by TibiaGoals.com" />
 	</item>
 	<item id="50182" article="a" name="nunchaku">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="dualsword" />
 		<attribute key="elementalbond" value="earth" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="32" />
@@ -83629,13 +83629,13 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="40" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="dualsword" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
 	<item id="50183" article="a" name="sai">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="dualsword" />
 		<attribute key="elementalbond" value="energy" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="38" />
@@ -83651,7 +83651,7 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="60" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="dualsword" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
@@ -83862,7 +83862,7 @@ Granted by TibiaGoals.com" />
 	</item>
 	<item id="50239" article="a" name="amber kusarigama">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="dualsword" />
 		<attribute key="elementalbond" value="physical" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="46" />
@@ -83887,7 +83887,7 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="330" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="dualsword" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
@@ -84318,7 +84318,7 @@ Granted by TibiaGoals.com" />
 	</item>
 	<item id="50270" article="a" name="bambus jo">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="staff" />
 		<attribute key="elementalbond" value="earth" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="42" />
@@ -84334,7 +84334,7 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="150" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="staff" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
@@ -84369,7 +84369,7 @@ Granted by TibiaGoals.com" />
 	<item id="50272" article="a" name="sai of enlightenment">
 		<attribute key="description" value="Traditional sai worn by pilgrims of the Three-Fold Path. Its design features elements of the natural appearance of moths" />
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="dualsword" />
 		<attribute key="elementalbond" value="earth" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="42" />
@@ -84390,14 +84390,14 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="100" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="dualsword" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
 	<item id="50273" article="a" name="nunchaku of enlightenment">
 		<attribute key="description" value="Traditional nunchaku used by pilgrims of the Three-Fold Path. Its design features elements of the natural appearance of moths" />
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="dualsword" />
 		<attribute key="elementalbond" value="physical" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="34" />
@@ -84418,7 +84418,7 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent;weapon">
 			<attribute key="level" value="50" />
 			<attribute key="unproperly" value="true" />
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="dualsword" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>
@@ -84679,7 +84679,7 @@ Granted by TibiaGoals.com" />
 	</item>
 	<item id="51119" article="a" name="simple jo staff">
 		<attribute key="primarytype" value="fist weapons" />
-		<attribute key="weaponType" value="fist" />
+		<attribute key="weaponType" value="staff" />
 		<attribute key="elementalbond" value="earth" />
 		<attribute key="slotType" value="two-handed" />
 		<attribute key="attack" value="12" />
@@ -84687,7 +84687,7 @@ Granted by TibiaGoals.com" />
 		<attribute key="skillfist" value="1" />
 		<attribute key="weight" value="1800" />
 		<attribute key="script" value="moveevent;weapon">
-			<attribute key="weaponType" value="fist" />
+			<attribute key="weaponType" value="staff" />
 			<attribute key="vocation" value="Monk;true, Exalted Monk" />
 		</attribute>
 	</item>

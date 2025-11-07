@@ -395,157 +395,189 @@ void ProtocolGame::AddItem(NetworkMessage &msg, uint16_t id, uint8_t count, uint
 	}
 }
 
-void ProtocolGame::AddItem(NetworkMessage &msg, const std::shared_ptr<Item> &item) {
-	if (!item) {
-		return;
-	}
-
-	const ItemType &it = Item::items[item->getID()];
-
-	msg.add<uint16_t>(it.id);
-
-	if (oldProtocol) {
-		msg.addByte(0xFF);
-	}
-
-	if (it.stackable) {
-		msg.addByte(static_cast<uint8_t>(std::min<uint16_t>(std::numeric_limits<uint8_t>::max(), item->getItemCount())));
-	}
-
-	if (it.isSplash() || it.isFluidContainer()) {
-		msg.addByte(item->getAttribute<uint8_t>(ItemAttribute_t::FLUIDTYPE));
-	}
-
-	if (oldProtocol) {
-		if (it.animationType == ANIMATION_RANDOM) {
-			msg.addByte(0xFE);
-		} else if (it.animationType == ANIMATION_DESYNC) {
-			msg.addByte(0xFF);
-		}
-
-		// OTCR Features
-		if (isOTCR) {
-			msg.addString(item->getShader()); // g_game.enableFeature(GameItemShader)
-		}
-		return;
-	}
-
-	if (it.isContainer()) {
-		uint8_t containerType = 0;
-
-		std::shared_ptr<Container> container = item->getContainer();
-		if (container && containerType == 0 && container->getHoldingPlayer() == player) {
-			uint32_t lootFlags = 0;
-			uint32_t obtainFlags = 0;
-			for (const auto &[category, containerMap] : player->m_managedContainers) {
-				if (!isValidObjectCategory(category)) {
-					continue;
-				}
-				if (containerMap.first == container) {
-					lootFlags |= 1 << category;
-				}
-				if (containerMap.second == container) {
-					obtainFlags |= 1 << category;
-				}
-			}
-
-			if (lootFlags != 0 || obtainFlags != 0) {
-				containerType = 9;
-				msg.addByte(containerType);
-				msg.add<uint32_t>(lootFlags);
-				msg.add<uint32_t>(obtainFlags);
-			}
-		}
-
-		// Quiver ammo count
-		if (container && containerType == 0 && item->isQuiver() && player->getThing(CONST_SLOT_RIGHT) == item) {
-			uint16_t ammoTotal = 0;
-			for (const std::shared_ptr<Item> &listItem : container->getItemList()) {
-				if (player->getLevel() >= Item::items[listItem->getID()].minReqLevel) {
-					ammoTotal += listItem->getItemCount();
-				}
-			}
-			containerType = 2;
-			msg.addByte(containerType);
-			msg.add<uint32_t>(ammoTotal);
-		}
-
-		if (containerType == 0) {
-			msg.addByte(0x00);
-		}
-	}
-
-	if (it.isPodium) {
-		const auto podiumVisible = item->getCustomAttribute("PodiumVisible");
-		const auto lookType = item->getCustomAttribute("LookType");
-		const auto lookTypeAttribute = item->getCustomAttribute("LookTypeEx");
-		const auto lookMount = item->getCustomAttribute("LookMount");
-		const auto lookDirection = item->getCustomAttribute("LookDirection");
-
-		if (lookType && lookType->getAttribute<uint16_t>() != 0) {
-			addOutfitAndMountBytes(msg, item, lookType, "LookHead", "LookBody", "LookLegs", "LookFeet", true);
-		} else if (lookTypeAttribute) {
-			auto lookTypeEx = lookTypeAttribute->getAttribute<uint16_t>();
-			// "Tantugly's Head" boss have to send other looktype to the podium
-			if (lookTypeEx == 35105) {
-				lookTypeEx = 39003;
-			}
-			msg.add<uint16_t>(0);
-			msg.add<uint16_t>(lookTypeEx);
-		} else {
-			msg.add<uint16_t>(0);
-			msg.add<uint16_t>(0);
-		}
-
-		if (lookMount) {
-			addOutfitAndMountBytes(msg, item, lookMount, "LookMountHead", "LookMountBody", "LookMountLegs", "LookMountFeet");
-		} else {
-			msg.add<uint16_t>(0);
-		}
-
-		msg.addByte(lookDirection ? lookDirection->getAttribute<uint8_t>() : 2);
-		msg.addByte(podiumVisible ? podiumVisible->getAttribute<uint8_t>() : 0x01);
-	}
-
-	if (item->getClassification() > 0) {
-		msg.addByte(item->getTier());
-	}
-
-	// Timer
-	if (it.expire || it.expireStop || it.clockExpire) {
-		if (item->hasAttribute(ItemAttribute_t::DURATION)) {
-			msg.add<uint32_t>(item->getDuration() / 1000);
-			msg.addByte((item->getDuration() / 1000) == it.decayTime ? 0x01 : 0x00); // Brand-new
-		} else {
-			msg.add<uint32_t>(it.decayTime);
-			msg.addByte(0x01); // Brand-new
-		}
-	}
-
-	// Charge
-	if (it.wearOut) {
-		if (item->getSubType() == 0) {
-			msg.add<uint32_t>(it.charges);
-			msg.addByte(0x01); // Brand-new
-		} else {
-			msg.add<uint32_t>(static_cast<uint32_t>(item->getSubType()));
-			msg.addByte(item->getSubType() == it.charges ? 0x01 : 0x00); // Brand-new
-		}
-	}
-
-	if (it.isWrapKit && !oldProtocol) {
-		uint16_t unWrapId = item->getCustomAttribute("unWrapId") ? static_cast<uint16_t>(item->getCustomAttribute("unWrapId")->getInteger()) : 0;
-		if (unWrapId != 0) {
-			msg.add<uint16_t>(unWrapId);
-		} else {
-			msg.add<uint16_t>(0x00);
-		}
-	}
-
-	// OTCR Features
-	if (isOTCR) {
-		msg.addString(item->getShader()); // g_game.enableFeature(GameItemShader)
-	}
+void ProtocolGame::AddItem(NetworkMessage &msg, const std::shared_ptr<Item> &item) {  
+	if (!item) {  
+		return;  
+	}  
+  
+	uint16_t itemId = item->getID();  
+	  
+	// Verificar si es magic wall, wild growth, o cualquier field PvP  
+	if (itemId == ITEM_MAGICWALL || itemId == ITEM_WILDGROWTH ||  
+	    itemId == ITEM_FIREFIELD_PVP_FULL || itemId == ITEM_FIREFIELD_PVP_MEDIUM || itemId == ITEM_FIREFIELD_PVP_SMALL ||  
+	    itemId == ITEM_ENERGYFIELD_PVP || itemId == ITEM_POISONFIELD_PVP) {  
+		  
+		auto ownerId = item->getOwnerId();  
+		  
+		if (ownerId != 0 && player) {  
+			auto ownerPlayer = g_game().getPlayerByGUID(ownerId);  
+			  
+			if (ownerPlayer) {  
+				const auto &magicField = item->getMagicField();  
+				  
+				if (magicField && !magicField->isAggressive(player)) {  
+					// Cambiar a versión SAFE/NOPVP según el tipo  
+					if (itemId == ITEM_MAGICWALL) {  
+						itemId = ITEM_MAGICWALL_SAFE;  
+					} else if (itemId == ITEM_WILDGROWTH) {  
+						itemId = ITEM_WILDGROWTH_SAFE;  
+					} else if (itemId == ITEM_FIREFIELD_PVP_FULL || itemId == ITEM_FIREFIELD_PVP_MEDIUM || itemId == ITEM_FIREFIELD_PVP_SMALL) {  
+						itemId = ITEM_FIREFIELD_NOPVP;  
+					} else if (itemId == ITEM_ENERGYFIELD_PVP) {  
+						itemId = ITEM_ENERGYFIELD_NOPVP;  
+					} else if (itemId == ITEM_POISONFIELD_PVP) {  
+						itemId = ITEM_POISONFIELD_NOPVP;  
+					}  
+				}  
+			}  
+		}  
+	}  
+	  
+	const ItemType &it = Item::items[itemId];  
+	  
+	msg.add<uint16_t>(it.id);  
+  
+	if (oldProtocol) {  
+		msg.addByte(0xFF);  
+	}  
+  
+	if (it.stackable) {  
+		msg.addByte(static_cast<uint8_t>(std::min<uint16_t>(std::numeric_limits<uint8_t>::max(), item->getItemCount())));  
+	}  
+  
+	if (it.isSplash() || it.isFluidContainer()) {  
+		msg.addByte(item->getAttribute<uint8_t>(ItemAttribute_t::FLUIDTYPE));  
+	}  
+  
+	if (oldProtocol) {  
+		if (it.animationType == ANIMATION_RANDOM) {  
+			msg.addByte(0xFE);  
+		} else if (it.animationType == ANIMATION_DESYNC) {  
+			msg.addByte(0xFF);  
+		}  
+  
+		// OTCR Features  
+		if (isOTCR) {  
+			msg.addString(item->getShader());  
+		}  
+		return;  
+	}  
+  
+	if (it.isContainer()) {  
+		uint8_t containerType = 0;  
+  
+		std::shared_ptr<Container> container = item->getContainer();  
+		if (container && containerType == 0 && container->getHoldingPlayer() == player) {  
+			uint32_t lootFlags = 0;  
+			uint32_t obtainFlags = 0;  
+			for (const auto &[category, containerMap] : player->m_managedContainers) {  
+				if (!isValidObjectCategory(category)) {  
+					continue;  
+				}  
+				if (containerMap.first == container) {  
+					lootFlags |= 1 << category;  
+				}  
+				if (containerMap.second == container) {  
+					obtainFlags |= 1 << category;  
+				}  
+			}  
+  
+			if (lootFlags != 0 || obtainFlags != 0) {  
+				containerType = 9;  
+				msg.addByte(containerType);  
+				msg.add<uint32_t>(lootFlags);  
+				msg.add<uint32_t>(obtainFlags);  
+			}  
+		}  
+  
+		// Quiver ammo count  
+		if (container && containerType == 0 && item->isQuiver() && player->getThing(CONST_SLOT_RIGHT) == item) {  
+			uint16_t ammoTotal = 0;  
+			for (const std::shared_ptr<Item> &listItem : container->getItemList()) {  
+				if (player->getLevel() >= Item::items[listItem->getID()].minReqLevel) {  
+					ammoTotal += listItem->getItemCount();  
+				}  
+			}  
+			containerType = 2;  
+			msg.addByte(containerType);  
+			msg.add<uint32_t>(ammoTotal);  
+		}  
+  
+		if (containerType == 0) {  
+			msg.addByte(0x00);  
+		}  
+	}  
+  
+	if (it.isPodium) {  
+		const auto podiumVisible = item->getCustomAttribute("PodiumVisible");  
+		const auto lookType = item->getCustomAttribute("LookType");  
+		const auto lookTypeAttribute = item->getCustomAttribute("LookTypeEx");  
+		const auto lookMount = item->getCustomAttribute("LookMount");  
+		const auto lookDirection = item->getCustomAttribute("LookDirection");  
+  
+		if (lookType && lookType->getAttribute<uint16_t>() != 0) {  
+			addOutfitAndMountBytes(msg, item, lookType, "LookHead", "LookBody", "LookLegs", "LookFeet", true);  
+		} else if (lookTypeAttribute) {  
+			auto lookTypeEx = lookTypeAttribute->getAttribute<uint16_t>();  
+			if (lookTypeEx == 35105) {  
+				lookTypeEx = 39003;  
+			}  
+			msg.add<uint16_t>(0);  
+			msg.add<uint16_t>(lookTypeEx);  
+		} else {  
+			msg.add<uint16_t>(0);  
+			msg.add<uint16_t>(0);  
+		}  
+  
+		if (lookMount) {  
+			addOutfitAndMountBytes(msg, item, lookMount, "LookMountHead", "LookMountBody", "LookMountLegs", "LookMountFeet");  
+		} else {  
+			msg.add<uint16_t>(0);  
+		}  
+  
+		msg.addByte(lookDirection ? lookDirection->getAttribute<uint8_t>() : 2);  
+		msg.addByte(podiumVisible ? podiumVisible->getAttribute<uint8_t>() : 0x01);  
+	}  
+  
+	if (item->getClassification() > 0) {  
+		msg.addByte(item->getTier());  
+	}  
+  
+	// Timer  
+	if (it.expire || it.expireStop || it.clockExpire) {  
+		if (item->hasAttribute(ItemAttribute_t::DURATION)) {  
+			msg.add<uint32_t>(item->getDuration() / 1000);  
+			msg.addByte((item->getDuration() / 1000) == it.decayTime ? 0x01 : 0x00);  
+		} else {  
+			msg.add<uint32_t>(it.decayTime);  
+			msg.addByte(0x01);  
+		}  
+	}  
+  
+	// Charge  
+	if (it.wearOut) {  
+		if (item->getSubType() == 0) {  
+			msg.add<uint32_t>(it.charges);  
+			msg.addByte(0x01);  
+		} else {  
+			msg.add<uint32_t>(static_cast<uint32_t>(item->getSubType()));  
+			msg.addByte(item->getSubType() == it.charges ? 0x01 : 0x00);  
+		}  
+	}  
+  
+	if (it.isWrapKit && !oldProtocol) {  
+		uint16_t unWrapId = item->getCustomAttribute("unWrapId") ? static_cast<uint16_t>(item->getCustomAttribute("unWrapId")->getInteger()) : 0;  
+		if (unWrapId != 0) {  
+			msg.add<uint16_t>(unWrapId);  
+		} else {  
+			msg.add<uint16_t>(0x00);  
+		}  
+	}  
+  
+	// OTCR Features  
+	if (isOTCR) {  
+		msg.addString(item->getShader());  
+	}  
 }
 
 void ProtocolGame::release() {

@@ -219,6 +219,8 @@ void LuaEnums::initOthersEnums(lua_State* L) {
 	registerEnum(L, WEAPON_AMMO);
 	registerEnum(L, WEAPON_MISSILE);
 	registerEnum(L, WEAPON_FIST);
+	registerEnum(L, WEAPON_STAFF);
+	registerEnum(L, WEAPON_DUAL_SWORD);	
 
 	registerEnum(L, SCREENSHOT_TYPE_NONE);
 	registerEnum(L, SCREENSHOT_TYPE_ACHIEVEMENT);

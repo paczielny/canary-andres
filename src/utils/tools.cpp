@@ -1095,6 +1095,10 @@ std::string getWeaponName(WeaponType_t weaponType) {
 			return "missile";
 		case WEAPON_FIST:
 			return "fist";
+		case WEAPON_STAFF:
+			return "staff";
+		case WEAPON_DUAL_SWORD:
+			return "dualsword";				
 		default:
 			return {};
 	}
@@ -1111,7 +1115,9 @@ WeaponType_t getWeaponType(const std::string &name) {
 		{ "wand", WeaponType_t::WEAPON_WAND },
 		{ "ammo", WeaponType_t::WEAPON_AMMO },
 		{ "missile", WeaponType_t::WEAPON_MISSILE },
-		{ "fist", WeaponType_t::WEAPON_FIST }
+		{ "fist", WeaponType_t::WEAPON_FIST },
+        { "staff", WeaponType_t::WEAPON_STAFF },
+		{ "dualsword", WeaponType_t::WEAPON_DUAL_SWORD }
 	};
 
 	const auto it = type_mapping.find(name);
