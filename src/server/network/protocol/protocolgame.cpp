@@ -10565,41 +10565,61 @@ void ProtocolGame::parseImbuementWindow(NetworkMessage &msg) {
 	}
 }
 
-void ProtocolGame::parseWeaponProficiency(NetworkMessage &msg) {
-	if (oldProtocol) {
-		return;
-	}
+void ProtocolGame::parseWeaponProficiency(NetworkMessage &msg) {    
+    if (oldProtocol) {    
+        return;    
+    }    
+    
+    const WeaponProficiency_t type = static_cast<WeaponProficiency_t>(msg.getByte());    
+    
+    if (type == WEAPON_PROFICIENCY_ITEM_INFO) {    
+        const uint16_t itemId = msg.get<uint16_t>();    
+        player->sendWeaponProficiencyInfo(itemId);    
+    
+    } else if (type == WEAPON_PROFICIENCY_LIST_INFO) {    
+        for (const auto &[itemId, _] : player->weaponProficiencies) {    
+            player->sendWeaponProficiencyInfo(itemId);    
+        }    
+    
+	} else if (type == WEAPON_PROFICIENCY_RESET_PERKS) {    
+		const uint16_t itemId = msg.get<uint16_t>();    
+		player->resetAllWeaponProficiencyPerks(itemId);    
 
-	const WeaponProficiency_t type = static_cast<WeaponProficiency_t>(msg.getByte());
+		if (player->hasWeaponProficiencyUpgradeAvailable()) {  
+			for (const auto &[weaponId, weaponData] : player->weaponProficiencies) {    
+				if (weaponData.experience > 0) {    
+					sendWeaponProficiencyExperience(weaponId, weaponData.experience);    
+					sendWeaponProficiencyInfo(weaponId);    
+				}    
+			}  
+		}  
+	} else if (type == WEAPON_PROFICIENCY_APPLY_PERKS) {    
+		const uint16_t itemId = msg.get<uint16_t>();    
+		
+		auto &proficiency = player->weaponProficiencies[itemId];    
+		proficiency.activePerks.clear();    
+		
+		const uint8_t sizeActivePerksList = msg.getByte();    
+		for (uint8_t i = 0; i < sizeActivePerksList; i++) {    
+			const uint8_t proficiencyLevel = msg.getByte();    
+			const uint8_t perkPosition = msg.getByte();    
+			
+			proficiency.activePerks.push_back({    
+				static_cast<uint8_t>(proficiencyLevel + 1),    
+				static_cast<uint8_t>(perkPosition + 1)    
+			});    
+		}    
+		
+		player->applyEquippedWeaponProficiency(itemId);    
 
-	if (type == WEAPON_PROFICIENCY_ITEM_INFO) {
-		const uint16_t itemId = msg.get<uint16_t>();
-		player->sendWeaponProficiencyInfo(itemId);
-
-	} else if (type == WEAPON_PROFICIENCY_LIST_INFO) {
-		for (const auto &[itemId, _] : player->weaponProficiencies) {
-			player->sendWeaponProficiencyInfo(itemId);
-		}
-
-	} else if (type == WEAPON_PROFICIENCY_RESET_PERKS) {
-		const uint16_t itemId = msg.get<uint16_t>();
-
-	} else if (type == WEAPON_PROFICIENCY_APPLY_PERKS) {
-		const uint16_t itemId = msg.get<uint16_t>();
-
-		auto &proficiency = player->weaponProficiencies[itemId];
-		proficiency.activePerks.clear();
-
-		const uint8_t sizeActivePerksList = msg.getByte();
-		for (uint8_t i = 0; i < sizeActivePerksList; i++) {
-			const uint8_t proficiencyLevel = msg.getByte();
-			const uint8_t perkPosition = msg.getByte();
-
-			proficiency.activePerks.push_back({ static_cast<uint8_t>(proficiencyLevel + 1),
-			                                    static_cast<uint8_t>(perkPosition + 1) });
-		}
-
-		player->applyEquippedWeaponProficiency(itemId);		
+		if (player->hasWeaponProficiencyUpgradeAvailable()) {  
+			for (const auto &[weaponId, weaponData] : player->weaponProficiencies) {    
+				if (weaponData.experience > 0) {    
+					sendWeaponProficiencyExperience(weaponId, weaponData.experience);    
+					sendWeaponProficiencyInfo(weaponId);    
+				}    
+			}  
+		}  
 	}
 }
 

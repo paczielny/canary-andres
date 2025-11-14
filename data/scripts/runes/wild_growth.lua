@@ -13,7 +13,11 @@ function onCreateWildGrowth(creature, position)
 	end  
   
 	local wildGrowth  
-	if Game.getWorldType() == WORLD_TYPE_NO_PVP then  
+	local player = creature:getPlayer()  
+
+	if player and player:getPvPMode() == PVP_MODE_RED_FIST then  
+		wildGrowth = ITEM_WILDGROWTH  
+	elseif Game.getWorldType() == WORLD_TYPE_NO_PVP then  
 		wildGrowth = ITEM_WILDGROWTH_SAFE  
 	else  
 		wildGrowth = ITEM_WILDGROWTH  
@@ -28,6 +32,7 @@ function onCreateWildGrowth(creature, position)
 		tile:addItemEx(item)  
 	end  
 end
+
 local combat = Combat()
 combat:setParameter(COMBAT_PARAM_DISTANCEEFFECT, CONST_ANI_ENERGY)
 combat:setCallback(CALLBACK_PARAM_TARGETTILE, "onCreateWildGrowth")

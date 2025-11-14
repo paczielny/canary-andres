@@ -270,6 +270,13 @@
 	<mount id="241" clientid="1843" name="Death Phoenix" speed="10" premium="no" type="store" />
 	<mount id="242" clientid="1844" name="Soul Phoenix" speed="10" premium="no" type="store" />
 	<mount id="243" clientid="1866" name="White Gloom Maw" speed="10" premium="yes" type="quest" />
-	<mount id="244" clientid="1867" name="Gloom Maw" speed="10" premium="yes" type="quest" />
 	<mount id="245" clientid="1873" name="Battle Werewolf" speed="10" premium="no" type="store" />
-</mounts>
+	<mount id="246" clientid="1882" name="Frazzlemaw" speed="10" premium="no" type="store" />
+	<mount id="247" clientid="1889" name="test" speed="10" premium="no" type="store" />
+	<mount id="248" clientid="1890" name="test 2" speed="10" premium="no" type="store" />	
+	<mount id="249" clientid="1908" name="azul" speed="10" premium="no" type="store" />	
+	<mount id="250" clientid="1909" name="blanco" speed="10" premium="no" type="store" />	
+	<mount id="251" clientid="1910" name="rojo" speed="10" premium="no" type="store" />	
+	<mount id="252" clientid="2601" name="xmas" speed="10" premium="no" type="store" />	
+	<mount id="253" clientid="2606" name="xmas 2" speed="10" premium="no" type="store" />
+</mounts> 

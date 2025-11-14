@@ -132,6 +132,7 @@ struct OpenContainer {
 	std::shared_ptr<Container> container;
 	uint16_t index;
 };
+
 struct WeaponProficiencyPerk {
 	uint8_t proficiencyLevel = 0;
 	uint8_t perkPosition = 0;
@@ -1054,9 +1055,12 @@ public:
 	void applyEquippedWeaponProficiency(const uint16_t itemId);
 	void removeEquippedWeaponProficiency(const uint16_t itemId);
 	void sendWeaponProficiencyExperience(const uint16_t itemId, const uint32_t addProficiencyExperience);
+	void sendAllWeaponProficiencyData() const;
+	bool hasWeaponProficiencyUpgradeAvailable() const;  
+	uint8_t calculateProficiencyLevel(uint32_t experience, uint8_t maxLevel, uint16_t itemId) const;
 
 	std::unordered_map<uint16_t, WeaponProficiencyData> weaponProficiencies;
-
+	
 	void sendPodiumWindow(const std::shared_ptr<Item> &podium, const Position &position, uint16_t itemId, uint8_t stackpos) const;
 	void sendCloseContainer(uint8_t cid) const;
 

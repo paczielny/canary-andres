@@ -1429,82 +1429,142 @@ bool Player::canCombat(const std::shared_ptr<Creature> &creature) const {
 	return false;  
 }
 
-bool Player::canWalkthrough(const std::shared_ptr<Creature> &creature) {  
-	if (group->access || creature->isInGhostMode()) {  
-		return true;  
-	}  
-  
-	bool expertPvpWalkThrough = g_configManager().getBoolean(TOGGLE_EXPERT_PVP) && g_configManager().getBoolean(EXPERT_PVP_CANWALKTHROUGHOTHERPLAYERS);  
-	const auto &player = creature->getPlayer();  
-	if (!player) {  
-		if (expertPvpWalkThrough) {  
-			if (const auto &monster = creature->getMonster()) {  
-				const auto master = monster->getMaster();  
-				if (!monster->isSummon() || !master || !master->getPlayer()) {  
-					return false;  
+bool Player::canWalkthrough(const std::shared_ptr<Creature> &creature) {    
+    if (group->access || creature->isInGhostMode()) {    
+        return true;    
+    }    
+    
+    bool expertPvpWalkThrough = g_configManager().getBoolean(TOGGLE_EXPERT_PVP) && g_configManager().getBoolean(EXPERT_PVP_CANWALKTHROUGHOTHERPLAYERS);    
+    const auto &player = creature->getPlayer();    
+    if (!player) {    
+        if (expertPvpWalkThrough) {    
+            if (const auto &monster = creature->getMonster()) {    
+                const auto master = monster->getMaster();    
+                if (!monster->isSummon() || !master || !master->getPlayer()) {    
+                    return false;    
+                }    
+    
+                const auto owner = master->getPlayer();    
+                return owner != getPlayer() && canWalkthrough(owner);    
+            }    
+        }    
+        return false;    
+    }    
+    
+	if (player && expertPvpWalkThrough) {  
+		const auto &thisPlayer = getPlayer();  
+		
+		// Si este jugador tiene Red Fist mode activo  
+		if (thisPlayer->getPvPMode() == PVP_MODE_RED_FIST) {  
+			if (!isPartner(player) && !isGuildMate(player)) {  
+				// PRIMERO: Generar situación de PvP y skull si no existe  
+				if (!hasAttacked(player) && !player->hasAttacked(thisPlayer)) {  
+					// Agregar attacked/attackedBy  
+					thisPlayer->addAttacked(player);  
+					player->addAttackedBy(thisPlayer);  
+					
+					// Aplicar white skull si no tiene skull  
+					if (thisPlayer->getSkull() == SKULL_NONE && player->getSkull() == SKULL_NONE) {  
+						thisPlayer->setSkull(SKULL_WHITE);  
+					}  
+					
+					// Actualizar squares de PvP  
+					g_game().updateCreatureSquare(thisPlayer);  
+					g_game().updateCreatureSquare(player);  
+					
+					// Aplicar pz lock  
+					if (!thisPlayer->pzLocked) {  
+						thisPlayer->pzLocked = true;  
+						thisPlayer->sendIcons();  
+					}  
 				}  
-  
-				const auto owner = master->getPlayer();  
-				return owner != getPlayer() && canWalkthrough(owner);  
+				
+				// DESPUÉS: Bloquear walkthrough  
+				return false;  
 			}  
 		}  
-		return false;  
-	}  
-  
-	if (expertPvpWalkThrough && player) {  
-		bool hasPvpSituation = hasAttacked(player) || player->hasAttacked(std::const_pointer_cast<Player>(static_self_cast<Player>()));  
-		if (!hasPvpSituation) {  
-			return true;  
+		
+		// Si el otro jugador tiene Red Fist mode, también bloquear  
+		if (player->getPvPMode() == PVP_MODE_RED_FIST) {  
+			if (!isPartner(player) && !isGuildMate(player)) {  
+				// Generar situación desde el otro lado  
+				if (!player->hasAttacked(thisPlayer) && !thisPlayer->hasAttacked(player)) {  
+					player->addAttacked(thisPlayer);  
+					thisPlayer->addAttackedBy(player);  
+					
+					if (player->getSkull() == SKULL_NONE && thisPlayer->getSkull() == SKULL_NONE) {  
+						player->setSkull(SKULL_WHITE);  
+					}  
+					
+					g_game().updateCreatureSquare(thisPlayer);  
+					g_game().updateCreatureSquare(player);  
+					
+					if (!player->pzLocked) {  
+						player->pzLocked = true;  
+						player->sendIcons();  
+					}  
+				}  
+				
+				return false;  
+			}  
 		}  
 	}  
-  
-	const auto &monster = creature->getMonster();  
-	const auto &npc = creature->getNpc();  
-	bool noPvpThroughAtSummon = false;  
-	// Allow players to walk through summons in no pvp worlds  
-	if (g_game().getWorldType() == WORLD_TYPE_NO_PVP) {  
-		const auto &monsterMaster = monster ? monster->getMaster() : nullptr;  
-		const auto &monsterMasterPlayer = monsterMaster ? monsterMaster->getPlayer() : nullptr;  
-		if (monsterMasterPlayer) {  
-			noPvpThroughAtSummon = true;  
-		}  
-	}  
-  
-	if (monster && (monster->isFamiliar() || noPvpThroughAtSummon)) {  
-		return true;  
-	}  
-  
-	if (player) {  
-		const auto &playerTile = player->getTile();  
-		if (!playerTile || (!playerTile->hasFlag(TILESTATE_NOPVPZONE) && !playerTile->hasFlag(TILESTATE_PROTECTIONZONE) && player->getLevel() > static_cast<uint32_t>(g_configManager().getNumber(PROTECTION_LEVEL)) && g_game().getWorldType() != WORLD_TYPE_NO_PVP)) {  
-			return false;  
-		}  
-  
-		const auto &playerTileGround = playerTile->getGround();  
-		if (!playerTileGround || !playerTileGround->hasWalkStack()) {  
-			return false;  
-		}  
-  
-		const auto &thisPlayer = getPlayer();  
-		if ((OTSYS_TIME() - lastWalkthroughAttempt) > 2000) {  
-			thisPlayer->setLastWalkthroughAttempt(OTSYS_TIME());  
-			return false;  
-		}  
-  
-		if (creature->getPosition() != lastWalkthroughPosition) {  
-			thisPlayer->setLastWalkthroughPosition(creature->getPosition());  
-			return false;  
-		}  
-  
-		thisPlayer->setLastWalkthroughPosition(creature->getPosition());  
-		return true;  
-	} else if (npc) {  
-		const auto &tile = npc->getTile();  
-		const auto &house = tile ? tile->getHouse() : nullptr;  
-		return (house != nullptr);  
-	}  
-  
-	return false;  
+      
+    // AHORA verificar situación de PvP normal (después de Red Fist)  
+    if (expertPvpWalkThrough && player) {    
+        bool hasPvpSituation = hasAttacked(player) || player->hasAttacked(std::const_pointer_cast<Player>(static_self_cast<Player>()));    
+        if (!hasPvpSituation) {    
+            return true;    
+        }    
+    }    
+          
+    const auto &monster = creature->getMonster();    
+    const auto &npc = creature->getNpc();    
+    bool noPvpThroughAtSummon = false;  
+      
+    if (g_game().getWorldType() == WORLD_TYPE_NO_PVP) {    
+        const auto &monsterMaster = monster ? monster->getMaster() : nullptr;    
+        const auto &monsterMasterPlayer = monsterMaster ? monsterMaster->getPlayer() : nullptr;    
+        if (monsterMasterPlayer) {    
+            noPvpThroughAtSummon = true;    
+        }    
+    }    
+    
+    if (monster && (monster->isFamiliar() || noPvpThroughAtSummon)) {    
+        return true;    
+    }    
+    
+    if (player) {    
+        const auto &playerTile = player->getTile();    
+        if (!playerTile || (!playerTile->hasFlag(TILESTATE_NOPVPZONE) && !playerTile->hasFlag(TILESTATE_PROTECTIONZONE) && player->getLevel() > static_cast<uint32_t>(g_configManager().getNumber(PROTECTION_LEVEL)) && g_game().getWorldType() != WORLD_TYPE_NO_PVP)) {    
+            return false;    
+        }    
+    
+        const auto &playerTileGround = playerTile->getGround();    
+        if (!playerTileGround || !playerTileGround->hasWalkStack()) {    
+            return false;    
+        }    
+    
+        const auto &thisPlayer = getPlayer();    
+        if ((OTSYS_TIME() - lastWalkthroughAttempt) > 2000) {    
+            thisPlayer->setLastWalkthroughAttempt(OTSYS_TIME());    
+            return false;    
+        }    
+    
+        if (creature->getPosition() != lastWalkthroughPosition) {    
+            thisPlayer->setLastWalkthroughPosition(creature->getPosition());    
+            return false;    
+        }    
+    
+        thisPlayer->setLastWalkthroughPosition(creature->getPosition());    
+        return true;    
+    } else if (npc) {    
+        const auto &tile = npc->getTile();    
+        const auto &house = tile ? tile->getHouse() : nullptr;    
+        return (house != nullptr);    
+    }    
+    
+    return false;    
 }
 
 bool Player::canWalkthroughEx(const std::shared_ptr<Creature> &creature) const {  
@@ -2695,7 +2755,7 @@ void Player::onApplyImbuement(const Imbuement* imbuement, const std::shared_ptr<
 			}
 		}
 
-		openImbuementWindow(IMBUEMENT_WINDOW_CHOICE);
+		openImbuementWindow(IMBUEMENT_WINDOW_SELECT_ITEM, item);
 	} else {
 		onApplyImbuementOnScroll(imbuement);
 		this->sendImbuementResult("Congratulations! You have successfully imbued your item.");
@@ -2727,7 +2787,7 @@ void Player::onClearImbuement(const std::shared_ptr<Item> &item, uint8_t slot) {
 
 		g_logger().error("[Player::onClearImbuement] - An error occurred while player with name {} try to apply imbuement, player do not have money", this->getName());
 		this->sendImbuementResult(message);
-		this->openImbuementWindow(IMBUEMENT_WINDOW_CHOICE);
+		this->openImbuementWindow(IMBUEMENT_WINDOW_SELECT_ITEM, item);
 		return;
 	}
 	g_metrics().addCounter("balance_decrease", baseImbuement->removeCost, { { "player", getName() }, { "context", "clear_imbuement" } });
@@ -2739,7 +2799,7 @@ void Player::onClearImbuement(const std::shared_ptr<Item> &item, uint8_t slot) {
 		updateImbuementTrackerStats();
 	}
 
-	this->openImbuementWindow(IMBUEMENT_WINDOW_CHOICE);
+	this->openImbuementWindow(IMBUEMENT_WINDOW_SELECT_ITEM, item);
 }
 
 void Player::openImbuementWindow(const Imbuement_Window_t type, const std::shared_ptr<Item> &item /*= nullptr*/) const {
@@ -12401,30 +12461,32 @@ void Player::addWeaponProficiencyExperience(const std::shared_ptr<MonsterType> &
 	sendWeaponProficiencyExperience(weaponItemId, addProficiencyExperience);
 }
 
-void Player::sendWeaponProficiencyExperience(const uint16_t itemId, const uint32_t addProficiencyExperience) {
-	const ItemType &itemType = Item::items[itemId];
-	if (!itemType.proficiencyId) {
-		return;
-	}
-
-	auto iter = weaponProficiencies.find(itemId);
-	if (iter == weaponProficiencies.end()) {
-		if (addProficiencyExperience > 0) {
-			WeaponProficiencyData data;
-			data.experience = addProficiencyExperience;
-			iter = weaponProficiencies.emplace(itemId, std::move(data)).first;
-		}
-
-		if (client) {
-			client->sendWeaponProficiencyExperience(itemId, addProficiencyExperience);
-		}
-	} else {
-		iter->second.experience += addProficiencyExperience;
-
-		if (client) {
-			client->sendWeaponProficiencyExperience(itemId, iter->second.experience);
-		}
-	}
+void Player::sendWeaponProficiencyExperience(const uint16_t itemId, const uint32_t addProficiencyExperience) {  
+    const ItemType &itemType = Item::items[itemId];  
+    if (!itemType.proficiencyId) {  
+        return;  
+    }  
+  
+    auto iter = weaponProficiencies.find(itemId);  
+    if (iter == weaponProficiencies.end()) {  
+        if (addProficiencyExperience > 0) {  
+            WeaponProficiencyData data;  
+            data.experience = addProficiencyExperience;  
+            iter = weaponProficiencies.emplace(itemId, std::move(data)).first;  
+        }  
+  
+        // Solo enviar al cliente si hay experiencia Y mejoras disponibles  
+        if (client && addProficiencyExperience > 0 && hasWeaponProficiencyUpgradeAvailable()) {  
+            client->sendWeaponProficiencyExperience(itemId, addProficiencyExperience);  
+        }  
+    } else {  
+        iter->second.experience += addProficiencyExperience;  
+  
+        // Solo enviar al cliente si hay mejoras disponibles  
+        if (client && hasWeaponProficiencyUpgradeAvailable()) {  
+            client->sendWeaponProficiencyExperience(itemId, iter->second.experience);  
+        }  
+    }  
 }
 
 void Player::sendWeaponProficiencyInfo(const uint16_t itemId) const {
@@ -12715,4 +12777,103 @@ void Player::removeEquippedWeaponProficiency(const uint16_t itemId) {
 
 	sendStats();
 	sendSkills();
+}
+
+uint8_t Player::calculateProficiencyLevel(uint32_t experience, uint8_t maxLevel, uint16_t itemId) const {  
+    const ItemType &itemType = Item::items[itemId];  
+    const WeaponType_t weaponType = itemType.weaponType;  
+      
+    // Determinar umbrales según clasificación  
+    std::vector<uint32_t> thresholds;  
+      
+    if (weaponType == WEAPON_DISTANCE || weaponType == WEAPON_MISSILE) {  
+        // Crossbows - Nivel 1 empieza en 600 exp  
+        thresholds = {600, 8000, 30000, 150000, 650000, 2500000, 10000000, 20000000, 30000000};  
+    } else if (weaponType == WEAPON_SWORD || weaponType == WEAPON_CLUB ||   
+               weaponType == WEAPON_AXE || weaponType == WEAPON_FIST) {  
+        // Knight Weapons - Nivel 1 empieza en 1,250 exp  
+        thresholds = {1250, 20000, 80000, 300000, 1500000, 6000000, 20000000, 40000000, 60000000};  
+    } else {  
+        // Standard (wands y otros) - Nivel 1 empieza en 1,750 exp  
+        thresholds = {1750, 25000, 100000, 400000, 2000000, 8000000, 30000000, 60000000, 90000000};  
+    }  
+      
+    // Calcular nivel: si no alcanza el primer umbral, nivel = 0  
+    uint8_t level = 0;  
+    for (uint8_t i = 0; i < std::min(maxLevel, static_cast<uint8_t>(thresholds.size())); ++i) {  
+        if (experience >= thresholds[i]) {  
+            level = i + 1;  // Nivel 1 cuando alcanza thresholds[0], nivel 2 cuando alcanza thresholds[1], etc.  
+        } else {  
+            break;  // No ha alcanzado este umbral, detener  
+        }  
+    }  
+      
+    return level;  
+}
+ 
+void Player::sendAllWeaponProficiencyData() const {  
+    if (!client) {  
+        return;  
+    }  
+      
+    // Verificar si hay mejoras disponibles en CUALQUIER arma  
+    const bool hasUpgrades = hasWeaponProficiencyUpgradeAvailable();  
+      
+    if (hasUpgrades) {  
+        // Si hay mejoras, enviar datos de todas las armas con experiencia  
+        for (const auto &[itemId, proficiencyData] : weaponProficiencies) {  
+            if (proficiencyData.experience > 0) {  
+                client->sendWeaponProficiencyExperience(itemId, proficiencyData.experience);  
+                client->sendWeaponProficiencyInfo(itemId);  
+            }  
+        }  
+    } else {  
+        // Si NO hay mejoras, enviar mensaje con experiencia 0 para forzar apagado  
+        if (!weaponProficiencies.empty()) {  
+            const auto &[firstItemId, firstData] = *weaponProficiencies.begin();  
+            client->sendWeaponProficiencyExperience(firstItemId, 0);  // ← Experiencia 0 fuerza apagado  
+            client->sendWeaponProficiencyInfo(firstItemId);  
+        }  
+    }  
+}
+
+bool Player::hasWeaponProficiencyUpgradeAvailable() const {  
+    for (const auto &[itemId, proficiencyData] : weaponProficiencies) {  
+        const auto* proficiencyStruct = g_proficiencies().getProficiencyByItemId(itemId);  
+        if (!proficiencyStruct) {  
+            continue;  
+        }  
+          
+        if (proficiencyData.experience == 0) {  
+            continue;  
+        }  
+          
+        uint8_t currentLevel = calculateProficiencyLevel(  
+            proficiencyData.experience,  
+            proficiencyStruct->maxProficiencyLevel,  
+            itemId  
+        );  
+          
+        if (currentLevel == 0) {  
+            continue;  
+        }  
+          
+        // Verificar cada nivel desbloqueado  
+        for (uint8_t level = 1; level <= currentLevel; ++level) {  
+            // Contar perks activos en este nivel  
+            uint8_t activePerksInLevel = 0;  
+            for (const auto &activePerk : proficiencyData.activePerks) {  
+                if (activePerk.proficiencyLevel == level) {  
+                    activePerksInLevel++;  
+                }  
+            }  
+              
+            // Solo 1 perk por nivel, si no hay ninguno activo, hay mejora disponible  
+            if (activePerksInLevel == 0) {  
+                return true;  
+            }  
+        }  
+    }  
+      
+    return false;  
 }

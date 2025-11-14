@@ -85941,4 +85941,36 @@ Granted by TibiaGoals.com" />
 	<item id="50555" name="stairs">
 		<attribute key="floorchange" value="south"/>
 	</item>
+	<item id="52878" article="a" name="test slayer">
+		<attribute key="primarytype" value="sword weapons" />
+		<attribute key="weaponType" value="sword" />
+		<attribute key="slotType" value="two-handed" />
+		<attribute key="attack" value="8" />
+		<attribute key="elementenergy" value="48" />
+		<attribute key="defense" value="33" />
+		<attribute key="skillsword" value="4" />
+		<attribute key="manaleechchance" value="10000" />
+		<attribute key="manaleechamount" value="1000" />
+		<attribute key="weight" value="8600" />
+		<attribute key="imbuementslot" value="2">
+			<attribute key="life leech" value="3" />
+			<attribute key="critical hit" value="3" />
+			<attribute key="skillboost sword" value="3" />
+		</attribute>
+		<attribute key="script" value="moveevent;weapon">
+			<attribute key="level" value="300" />
+			<attribute key="unproperly" value="true" />
+			<attribute key="weaponType" value="sword" />
+			<attribute key="vocation" value="Knight;true, Elite Knight" />
+			<attribute key="slot" value="hand" />
+		</attribute>
+	</item>
+	<item fromid="52883" toid="52884" article="a" name="christmas bath tub">
+		<attribute key="primarytype" value="decoration" />
+		<attribute key="description" value="A very inviting bath tub filled with water" />
+		<attribute key="wrapableto" value="23398" />
+	</item>
+	<item id="52893" article="a" name="christmas bath tub">
+		<attribute key="primarytype" value="decoration" />
+	</item>
 </items>

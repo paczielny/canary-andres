@@ -15,7 +15,7 @@ function proficiencyCatalysts.onUse(player, item, fromPosition, target, toPositi
 		return false
 	end
 
-	if targetType:getWeaponType() == WEAPON_SWORD or targetType:getWeaponType() == WEAPON_CLUB or targetType:getWeaponType() == WEAPON_AXE or targetType:getWeaponType() == WEAPON_DISTANCE or targetType:getWeaponType() == WEAPON_WAND or targetType:getWeaponType() == WEAPON_MISSILE or targetType:getWeaponType() == WEAPON_FIST then
+	if targetType:getWeaponType() == WEAPON_FIST or targetType:getWeaponType() == WEAPON_SWORD or targetType:getWeaponType() == WEAPON_CLUB or targetType:getWeaponType() == WEAPON_AXE or targetType:getWeaponType() == WEAPON_DISTANCE or targetType:getWeaponType() == WEAPON_WAND or targetType:getWeaponType() == WEAPON_MISSILE or targetType:getWeaponType() == WEAPON_STAFF or targetType:getWeaponType() == WEAPON_DUAL_SWORD then
 		local configData = config[item.itemid]
 		if not configData then
 			return false

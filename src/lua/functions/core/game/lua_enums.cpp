@@ -843,6 +843,12 @@ void LuaEnums::initFightModeEnums(lua_State* L) {
 	registerEnum(L, FIGHTMODE_ATTACK);
 	registerEnum(L, FIGHTMODE_BALANCED);
 	registerEnum(L, FIGHTMODE_DEFENSE);
+
+	// PvP Modes  
+	registerEnum(L, PVP_MODE_DOVE);  
+	registerEnum(L, PVP_MODE_WHITE_HAND);  
+	registerEnum(L, PVP_MODE_YELLOW_HAND);  
+	registerEnum(L, PVP_MODE_RED_FIST); 
 }
 
 void LuaEnums::initItemAttributeEnums(lua_State* L) {

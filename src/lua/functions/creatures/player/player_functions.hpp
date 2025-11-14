@@ -275,7 +275,8 @@ class PlayerFunctions {
 	static int luaPlayerHasChaseMode(lua_State* L);
 	static int luaPlayerHasSecureMode(lua_State* L);
 	static int luaPlayerGetFightMode(lua_State* L);
-
+	static int luaPlayerGetPvPMode(lua_State* L);
+	
 	static int luaPlayerGetBaseXpGain(lua_State* L);
 	static int luaPlayerSetBaseXpGain(lua_State* L);
 	static int luaPlayerGetVoucherXpBoost(lua_State* L);
@@ -406,7 +407,8 @@ class PlayerFunctions {
 	static int luaPlayerApplyImbuementScrollToItem(lua_State* L);
 	static int luaPlayerOnClearAllImbuementsOnEtcher(lua_State* L);
 	static int luaPlayerSendWeaponProficiencyExperience(lua_State* L);
-
+	static int luaPlayerHasWeaponProficiencyUpgradeAvailable(lua_State* L);
+	
 	static int luaPlayerGetMapShader(lua_State* L);
 	static int luaPlayerSetMapShader(lua_State* L);
 	static int luaPlayerAddCustomOutfit(lua_State* L);

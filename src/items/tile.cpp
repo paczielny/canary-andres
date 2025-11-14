@@ -748,42 +748,98 @@ ReturnValue Tile::queryAdd(int32_t, const std::shared_ptr<Thing> &thing, uint32_
 			}  
 		}  
   
-		if (!hasBitSet(FLAG_IGNOREBLOCKITEM, tileFlags)) {  
-			if (hasFlag(TILESTATE_BLOCKSOLID)) {  
-				if (creature && creature->getPlayer()) {  
-					if (const auto fieldList = getItemList()) {  
-						for (const auto &findfield : *fieldList) {  
-							// Verificar walls SAFE primero  
-							if (findfield && (findfield->getID() == ITEM_WILDGROWTH_SAFE ||   
-											findfield->getID() == ITEM_MAGICWALL_SAFE)) {  
-								if (!creature->isInGhostMode()) {  
-									g_game().internalRemoveItem(findfield, 1);  
+		if (!hasBitSet(FLAG_IGNOREBLOCKITEM, tileFlags)) {    
+			if (hasFlag(TILESTATE_BLOCKSOLID)) {    
+				if (creature && creature->getPlayer()) {    
+					if (const auto fieldList = getItemList()) {    
+						auto currentPlayer = creature->getPlayer();  
+						
+						for (const auto &findfield : *fieldList) {    
+							// Verificar walls SAFE primero    
+							if (findfield && (findfield->getID() == ITEM_WILDGROWTH_SAFE ||     
+											findfield->getID() == ITEM_MAGICWALL_SAFE)) {    
+								if (!creature->isInGhostMode()) {    
+									g_game().internalRemoveItem(findfield, 1);    
+								}    
+								return RETURNVALUE_NOERROR;    
+							}    
+								
+							// Verificar magic walls y wild growth normales    
+							if (findfield && (findfield->getID() == ITEM_MAGICWALL ||     
+											findfield->getID() == ITEM_WILDGROWTH)) {  
+								
+								auto ownerId = findfield->getOwnerId();  
+								
+								// NUEVO: Verificar Red Fist mode del owner  
+								if (ownerId != 0) {    
+									const auto &ownerPlayer = g_game().getPlayerByGUID(ownerId);    
+									if (ownerPlayer && ownerPlayer->getPvPMode() == PVP_MODE_RED_FIST) {    
+										// Owner tiene Red Fist mode activo    
+										if (!currentPlayer->isPartner(ownerPlayer) && !currentPlayer->isGuildMate(ownerPlayer)) {    
+											// Generar situación de PvP y skull automáticamente    
+											if (!ownerPlayer->hasAttacked(currentPlayer) && !currentPlayer->hasAttacked(ownerPlayer)) {    
+												// Agregar attacked/attackedBy    
+												ownerPlayer->addAttacked(currentPlayer);    
+												currentPlayer->addAttackedBy(ownerPlayer);    
+												
+												// Aplicar white skull al owner si no tiene skull    
+												if (ownerPlayer->getSkull() == SKULL_NONE && currentPlayer->getSkull() == SKULL_NONE) {    
+													ownerPlayer->setSkull(SKULL_WHITE);    
+												}    
+												
+												// Actualizar squares    
+												g_game().updateCreatureSquare(ownerPlayer);    
+												g_game().updateCreatureSquare(currentPlayer);    
+												
+												// Aplicar pz lock al owner    
+												if (!ownerPlayer->isPzLocked()) {    
+													ownerPlayer->addInFightTicks(true);  // ✅ CORRECTO  
+												}    
+											}    
+											
+											// Bloquear el paso    
+											return RETURNVALUE_NOTENOUGHROOM;    
+										}    
+									}    
+								} 
+								
+								// Verificación normal de owner (sin Red Fist)  
+								if (ownerId != 0 && currentPlayer->getGUID() == ownerId) {  
+									return RETURNVALUE_NOTENOUGHROOM;  
 								}  
-								return RETURNVALUE_NOERROR;  
-							}  
-							  
-							// Verificar magic walls y wild growth normales  
-							if (findfield && (findfield->getID() == ITEM_MAGICWALL ||   
-											findfield->getID() == ITEM_WILDGROWTH ||   
-											findfield->getID() == ITEM_FIREFIELD_PVP_FULL ||   
-											findfield->getID() == ITEM_FIREFIELD_PVP_MEDIUM ||   
-											findfield->getID() == ITEM_FIREFIELD_PVP_SMALL ||   
-											findfield->getID() == ITEM_ENERGYFIELD_PVP ||   
-											findfield->getID() == ITEM_POISONFIELD_PVP)) {  
-								const auto &magicField = findfield->getMagicField();  
-								if (magicField) {  
-									if (!magicField->isAggressive(creature->getPlayer())) {  
-										return RETURNVALUE_NOERROR;  
-									} else {  
+								
+								// Verificar situación de PvP existente  
+								const auto &ownerPlayer = g_game().getPlayerByGUID(ownerId);  
+								if (ownerPlayer) {  
+									bool hasAttacked = currentPlayer->hasAttacked(ownerPlayer) || ownerPlayer->hasAttacked(currentPlayer);  
+									if (hasAttacked) {  
 										return RETURNVALUE_NOTENOUGHROOM;  
 									}  
 								}  
+								
+								return RETURNVALUE_NOERROR;  
 							}  
-						}  
-					}  
-				}  
-				return RETURNVALUE_NOTENOUGHROOM;  
-			}  
+							
+							// Verificar otros campos PvP  
+							if (findfield && (findfield->getID() == ITEM_FIREFIELD_PVP_FULL ||     
+											findfield->getID() == ITEM_FIREFIELD_PVP_MEDIUM ||     
+											findfield->getID() == ITEM_FIREFIELD_PVP_SMALL ||     
+											findfield->getID() == ITEM_ENERGYFIELD_PVP ||     
+											findfield->getID() == ITEM_POISONFIELD_PVP)) {    
+								const auto &magicField = findfield->getMagicField();    
+								if (magicField) {    
+									if (!magicField->isAggressive(creature->getPlayer())) {    
+										return RETURNVALUE_NOERROR;    
+									} else {    
+										return RETURNVALUE_NOTENOUGHROOM;    
+									}    
+								}    
+							}    
+						}    
+					}    
+				}    
+				return RETURNVALUE_NOTENOUGHROOM;    
+			} 
 		} else {  
 			// FLAG_IGNOREBLOCKITEM is set  
 			if (ground) {  

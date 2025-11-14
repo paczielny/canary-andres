@@ -1001,6 +1001,8 @@ void IOLoginDataLoad::loadPlayerInitializeSystem(const std::shared_ptr<Player> &
 
 	player->initializePrey();
 	player->initializeTaskHunting();
+
+    player->sendAllWeaponProficiencyData();
 }
 
 void IOLoginDataLoad::loadPlayerUpdateSystem(const std::shared_ptr<Player> &player) {

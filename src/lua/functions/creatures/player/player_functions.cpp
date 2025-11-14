@@ -288,6 +288,7 @@ void PlayerFunctions::init(lua_State* L) {
 	Lua::registerMethod(L, "Player", "hasChaseMode", PlayerFunctions::luaPlayerHasChaseMode);
 	Lua::registerMethod(L, "Player", "hasSecureMode", PlayerFunctions::luaPlayerHasSecureMode);
 	Lua::registerMethod(L, "Player", "getFightMode", PlayerFunctions::luaPlayerGetFightMode);
+	Lua::registerMethod(L, "Player", "getPvPMode", PlayerFunctions::luaPlayerGetPvPMode);
 
 	Lua::registerMethod(L, "Player", "getBaseXpGain", PlayerFunctions::luaPlayerGetBaseXpGain);
 	Lua::registerMethod(L, "Player", "setBaseXpGain", PlayerFunctions::luaPlayerSetBaseXpGain);
@@ -426,6 +427,7 @@ void PlayerFunctions::init(lua_State* L) {
 
 	Lua::registerMethod(L, "Player", "applyImbuementScrollToItem", PlayerFunctions::luaPlayerApplyImbuementScrollToItem);
 	Lua::registerMethod(L, "Player", "onClearAllImbuementsOnEtcher", PlayerFunctions::luaPlayerOnClearAllImbuementsOnEtcher);
+	Lua::registerMethod(L, "Player", "hasWeaponProficiencyUpgradeAvailable", PlayerFunctions::luaPlayerHasWeaponProficiencyUpgradeAvailable);
 	Lua::registerMethod(L, "Player", "sendWeaponProficiencyExperience", PlayerFunctions::luaPlayerSendWeaponProficiencyExperience);
 
 	GroupFunctions::init(L);
@@ -3323,7 +3325,7 @@ int PlayerFunctions::luaPlayerCloseImbuementWindow(lua_State* L) {
 		return 1;
 	}
 
-	player->openImbuementWindow(IMBUEMENT_WINDOW_CHOICE);
+	player->closeImbuementWindow();
 	return 1;
 }
 
@@ -3614,6 +3616,17 @@ int PlayerFunctions::luaPlayerGetFightMode(lua_State* L) {
 		lua_pushnil(L);
 	}
 	return 1;
+}
+
+int PlayerFunctions::luaPlayerGetPvPMode(lua_State* L) {  
+	// player:getPvPMode()  
+	const auto &player = Lua::getUserdataShared<Player>(L, 1, "Player");  
+	if (player) {  
+		lua_pushnumber(L, player->getPvPMode());  
+	} else {  
+		lua_pushnil(L);  
+	}  
+	return 1;  
 }
 
 int PlayerFunctions::luaPlayerGetBaseXpGain(lua_State* L) {
@@ -5232,7 +5245,7 @@ int PlayerFunctions::luaPlayerOnClearAllImbuementsOnEtcher(lua_State* L) {
 		return 1;
 	}
 
-	const auto &item = Lua::getUserdataShared<Item>(L, 3, "Item");
+	const auto &item = Lua::getUserdataShared<Item>(L, 2, "Item");
 	if (!item) {
 		Lua::reportErrorFunc(Lua::getErrorDesc(LUA_ERROR_ITEM_NOT_FOUND));
 		Lua::pushBoolean(L, false);
@@ -5242,6 +5255,19 @@ int PlayerFunctions::luaPlayerOnClearAllImbuementsOnEtcher(lua_State* L) {
 	player->onClearAllImbuementsOnEtcher(item);
 	Lua::pushBoolean(L, true);
 	return 1;
+}
+
+int PlayerFunctions::luaPlayerHasWeaponProficiencyUpgradeAvailable(lua_State* L) {  
+	// player:hasWeaponProficiencyUpgradeAvailable()  
+	const auto &player = Lua::getUserdataShared<Player>(L, 1, "Player");  
+	if (!player) {  
+		Lua::reportErrorFunc(Lua::getErrorDesc(LUA_ERROR_PLAYER_NOT_FOUND));  
+		Lua::pushBoolean(L, false);  
+		return 1;  
+	}  
+  
+	Lua::pushBoolean(L, player->hasWeaponProficiencyUpgradeAvailable());  
+	return 1;  
 }
 
 int PlayerFunctions::luaPlayerSendWeaponProficiencyExperience(lua_State* L) {

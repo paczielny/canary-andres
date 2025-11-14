@@ -13,7 +13,11 @@ function onCreateMagicWall(creature, position)
 	end  
   
 	local magicWall  
-	if Game.getWorldType() == WORLD_TYPE_NO_PVP then  
+	local player = creature:getPlayer()  
+
+	if player and player:getPvPMode() == PVP_MODE_RED_FIST then  
+		magicWall = ITEM_MAGICWALL  
+	elseif Game.getWorldType() == WORLD_TYPE_NO_PVP then  
 		magicWall = ITEM_MAGICWALL_SAFE  
 	else  
 		magicWall = ITEM_MAGICWALL  

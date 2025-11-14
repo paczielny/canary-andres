@@ -4646,9 +4646,9 @@ void Game::playerWrapableItem(uint32_t playerId, const Position &pos, uint8_t st
 	}
 
 	// Prevent to wrap a filled bath tube
-	if (item->getID() == ITEM_FILLED_BATH_TUBE) {
-		player->sendCancelMessage(RETURNVALUE_NOTPOSSIBLE);
-		return;
+	if (item->getID() == ITEM_FILLED_BATH_TUBE || item->getID() == ITEM_FILLED_XMAS_BATH_TUBE) {  
+		player->sendCancelMessage(RETURNVALUE_NOTPOSSIBLE);  
+		return;  
 	}
 
 	if (item->isWrapable() && item->getID() != ITEM_DECORATION_KIT) {

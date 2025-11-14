@@ -21,6 +21,7 @@
 #include "creatures/players/vocations/vocation.hpp"
 #include "items/item.hpp"
 #include "lua/functions/events/move_event_functions.hpp"
+#include "server/network/protocol/protocolgame.hpp"
 
 MoveEvents &MoveEvents::getInstance() {
 	return inject<MoveEvents>();
@@ -622,15 +623,18 @@ uint32_t MoveEvent::EquipItem(const std::shared_ptr<MoveEvent> &moveEvent, const
 		player->setMainBackpackUnassigned(item->getContainer());
 	}
 
-	// Weapon Proficiency
-	if (slot == CONST_SLOT_LEFT || slot == CONST_SLOT_RIGHT) {
-		player->sendWeaponProficiencyExperience(itemId, 0);
-		player->applyEquippedWeaponProficiency(itemId);
+	// Weapon Proficiency  
+	if (slot == CONST_SLOT_LEFT || slot == CONST_SLOT_RIGHT) {  
+		// Solo enviar datos si el jugador tiene mejoras disponibles  
+		auto iter = player->weaponProficiencies.find(itemId);  
+		if (iter != player->weaponProficiencies.end() && iter->second.experience > 0) {  
+			// Verificar si hay mejoras disponibles antes de enviar  
+			if (player->hasWeaponProficiencyUpgradeAvailable()) {  
+				player->sendWeaponProficiencyExperience(itemId, 0);  
+			}  
+		}  
+		player->applyEquippedWeaponProficiency(itemId);  
 	}
-
-	player->sendStats();
-	player->sendSkills();
-	return 1;
 }
 
 uint32_t MoveEvent::DeEquipItem(const std::shared_ptr<MoveEvent> &, const std::shared_ptr<Player> &player, const std::shared_ptr<Item> &item, Slots_t slot, bool) {

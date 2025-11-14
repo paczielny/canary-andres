@@ -235,39 +235,44 @@ void IOMapSerialize::saveItem(PropWriteStream &stream, const std::shared_ptr<Ite
 	stream.write<uint8_t>(0x00); // attr end
 }
 
-void IOMapSerialize::saveTile(PropWriteStream &stream, const std::shared_ptr<Tile> &tile) {
-	const TileItemVector* tileItems = tile->getItemList();
-	if (!tileItems) {
-		return;
-	}
-
-	std::list<std::shared_ptr<Item>> items;
-	uint16_t count = 0;
-	for (auto &item : *tileItems) {
-		if (item->getID() == ITEM_BATHTUB_FILLED_NOTMOVABLE) {
-			std::shared_ptr<Item> tub = Item::CreateItem(ITEM_BATHTUB_FILLED);
-			items.push_front(tub);
-			++count;
-			continue;
-		} else if (!item->isSavedToHouses()) {
-			continue;
-		}
-
-		items.push_front(item);
-		++count;
-	}
-
-	if (!items.empty()) {
-		const Position &tilePosition = tile->getPosition();
-		stream.write<uint16_t>(tilePosition.x);
-		stream.write<uint16_t>(tilePosition.y);
-		stream.write<uint8_t>(tilePosition.z);
-
-		stream.write<uint32_t>(count);
-		for (const std::shared_ptr<Item> &item : items) {
-			saveItem(stream, item);
-		}
-	}
+void IOMapSerialize::saveTile(PropWriteStream &stream, const std::shared_ptr<Tile> &tile) {  
+	const TileItemVector* tileItems = tile->getItemList();  
+	if (!tileItems) {  
+		return;  
+	}  
+  
+	std::list<std::shared_ptr<Item>> items;  
+	uint16_t count = 0;  
+	for (auto &item : *tileItems) {  
+		if (item->getID() == ITEM_BATHTUB_FILLED_NOTMOVABLE) {  
+			std::shared_ptr<Item> tub = Item::CreateItem(ITEM_BATHTUB_FILLED);  
+			items.push_front(tub);  
+			++count;  
+			continue;  
+		} else if (item->getID() == ITEM_XMAS_BATHTUB_FILLED_NOTMOVABLE) {  // Agrega esto  
+			std::shared_ptr<Item> tub = Item::CreateItem(ITEM_XMAS_BATHTUB_FILLED);  
+			items.push_front(tub);  
+			++count;  
+			continue;  
+		} else if (!item->isSavedToHouses()) {  
+			continue;  
+		}  
+  
+		items.push_front(item);  
+		++count;  
+	}  
+  
+	if (!items.empty()) {  
+		const Position &tilePosition = tile->getPosition();  
+		stream.write<uint16_t>(tilePosition.x);  
+		stream.write<uint16_t>(tilePosition.y);  
+		stream.write<uint8_t>(tilePosition.z);  
+  
+		stream.write<uint32_t>(count);  
+		for (const std::shared_ptr<Item> &item : items) {  
+			saveItem(stream, item);  
+		}  
+	}  
 }
 
 bool IOMapSerialize::loadHouseInfo() {
