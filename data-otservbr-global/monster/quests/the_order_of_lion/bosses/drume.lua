@@ -119,6 +119,7 @@ monster.loot = {
 	{ name = "lion hammer", chance = 300 },
 	{ name = "lion axe", chance = 300 },
 	{ name = "lion longbow", chance = 300 },
+	{ name = "lion claws", chance = 350 },
 	{ name = "lion spellbook", chance = 350 },
 	{ name = "lion wand", chance = 300 },
 	{ name = "lion amulet", chance = 300 },

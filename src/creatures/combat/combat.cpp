@@ -467,31 +467,33 @@ ReturnValue Combat::canDoCombat(const std::shared_ptr<Creature> &attacker, const
 					return RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE;
 				}
 
-				if (g_game().getOwnerPlayer(target)) {
-					if (target->getZoneType() == ZONE_NOPVP) {
-						return RETURNVALUE_ACTIONNOTPERMITTEDINANOPVPZONE;
-					} else if (g_configManager().getBoolean(TOGGLE_EXPERT_PVP) && isProtected(attackerPlayer, targetPlayer)) {
-						return RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE;
-					} else if (!attackerPlayer->canCombat(target)) {
-						return RETURNVALUE_ADJUSTYOURCOMBAT;
-					}
-				}
-			} else if (attackerMonster) {
-				if ((!targetMaster || !targetMasterPlayer) && attacker->getFaction() == FACTION_DEFAULT) {
-					if (!attackerMaster || !masterAttackerPlayer) {
-						return RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE;
-					}
-				} else if (g_configManager().getBoolean(TOGGLE_EXPERT_PVP)) {
-					if (g_game().getOwnerPlayer(target)) {
-						if (target->getZoneType() == ZONE_NOPVP) {
-							return RETURNVALUE_ACTIONNOTPERMITTEDINANOPVPZONE;
-						} else if (isProtected(attackerPlayer, targetPlayer)) {
-							return RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE;
-						} else if (!attackerPlayer->canCombat(target)) {
-							return RETURNVALUE_ADJUSTYOURCOMBAT;
-						}
-					}
-				}
+				auto targetOwner = g_game().getOwnerPlayer(target);  
+				if (targetOwner) {  
+					if (target->getZoneType() == ZONE_NOPVP) {  
+						return RETURNVALUE_ACTIONNOTPERMITTEDINANOPVPZONE;  
+					} else if (g_configManager().getBoolean(TOGGLE_EXPERT_PVP) && isProtected(attackerPlayer, targetOwner)) {  
+						return RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE;  
+					} else if (!attackerPlayer->canCombat(target)) {  
+						return RETURNVALUE_ADJUSTYOURCOMBAT;  
+					}  
+				}  
+			} else if (attackerMonster) {  
+				if ((!targetMaster || !targetMasterPlayer) && attacker->getFaction() == FACTION_DEFAULT) {  
+					if (!attackerMaster || !masterAttackerPlayer) {  
+						return RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE;  
+					}  
+				} else if (g_configManager().getBoolean(TOGGLE_EXPERT_PVP)) {  
+					auto targetOwner = g_game().getOwnerPlayer(target);  
+					if (targetOwner) {  
+						if (target->getZoneType() == ZONE_NOPVP) {  
+							return RETURNVALUE_ACTIONNOTPERMITTEDINANOPVPZONE;  
+						} else if (masterAttackerPlayer && isProtected(masterAttackerPlayer, targetOwner)) {  
+							return RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE;  
+						} else if (masterAttackerPlayer && !masterAttackerPlayer->canCombat(target)) {  
+							return RETURNVALUE_ADJUSTYOURCOMBAT;  
+						}  
+					}  
+				}  
 			}
 		} else if (target && target->getNpc()) {
 			return RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE;
@@ -1282,6 +1284,12 @@ void Combat::setupChain(const std::shared_ptr<Weapon> &weapon) {
 
 	switch (weaponType) {
 		case WEAPON_FIST:
+			setCommonValues(g_configManager().getFloat(COMBAT_CHAIN_SKILL_FORMULA_FIST), HUMAN_CLOSE_ATK_FIST, CONST_ME_HITAREA);
+			break;
+		case WEAPON_DUAL_SWORD:
+			setCommonValues(g_configManager().getFloat(COMBAT_CHAIN_SKILL_FORMULA_FIST), HUMAN_CLOSE_ATK_FIST, CONST_ME_HITAREA);
+			break;
+		case WEAPON_STAFF:
 			setCommonValues(g_configManager().getFloat(COMBAT_CHAIN_SKILL_FORMULA_FIST), HUMAN_CLOSE_ATK_FIST, CONST_ME_HITAREA);
 			break;
 		case WEAPON_SWORD:

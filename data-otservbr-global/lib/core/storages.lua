@@ -3075,6 +3075,72 @@ Storage = {
 				Bloodbath = 48006,
 			},
 		},
+		U15_20 = { -- update 15.20 - Reserved Storages 68000 - 68100  
+			TaskRooms = {  
+				Room1 = {  
+					Goblin = { quest = 68000, counter = 68001 },  
+					Troll = { quest = 68002, counter = 68003 },  
+					Rotworm = { quest = 68004, counter = 68005 }, 
+					Minotaur = { quest = 68006, counter = 68007 },				
+					Elf = { quest = 68008, counter = 68009 },				
+					Dwarf = { quest = 68010, counter = 68011 },				
+					Amazon = { quest = 68012, counter = 68013 },				
+					Barbarian = { quest = 68014, counter = 68015 },				
+					Corym = { quest = 68016, counter = 68017 },				
+					Magician = { quest = 68018, counter = 68019 },			
+					Dworc = { quest = 68020, counter = 68021 },
+					Cyclops = { quest = 68022, counter = 68023 }
+				},  
+				Room2 = {  
+					Cults = { quest = 68025, counter = 68026 },
+					Asuras = { quest = 68027, counter = 68028 },
+					Orcs = { quest = 68029, counter = 68030 },
+					Pirat = { quest = 68031, counter = 68032 },
+					Barkless = { quest = 68033, counter = 68034 },
+					Hero = { quest = 68035, counter = 68036 },
+					Deepling = { quest = 68037, counter = 68038 },
+					Dragon = { quest = 68039, counter = 68040 },
+					Draken = { quest = 68041, counter = 68042 },
+					Werebear = { quest = 68043, counter = 68044 },
+					Spider = { quest = 68045, counter = 68046 },
+					Lizard = { quest = 68047, counter = 68048 }
+				},  
+				Room3 = {  
+					Cathedral = { quest = 68050, counter = 68051 },
+					Falcon = { quest = 68052, counter = 68053 },
+					Court = { quest = 68054, counter = 68055 },
+					Cobra = { quest = 68056, counter = 68057 },
+					Crypt = { quest = 68058, counter = 68059 },
+					Deathling = { quest = 68060, counter = 68061 },
+					Prison = { quest = 68062, counter = 68063 },
+					Dragolisk = { quest = 68064, counter = 68065 },
+					Ingol = { quest = 68066, counter = 68067 },
+					Roshamuul = { quest = 68068, counter = 68069 },
+					Naga = { quest = 68070, counter = 68071 },
+					Goanna = { quest = 68072, counter = 68073 }
+				},  
+				Room4 = {  
+					Ice = { quest = 68075, counter = 68076 },
+					Fire = { quest = 68077, counter = 68078 },
+					Energy = { quest = 68079, counter = 68080 },
+					FuriousCrater = { quest = 68081, counter = 68082 },
+					MirroredNightmare = { quest = 68083, counter = 68084 },
+					RottenWasteland = { quest = 68085, counter = 68086 },
+					ClaustrophobicInferno = { quest = 68087, counter = 68088 },
+					CrystalEnigma = { quest = 68089, counter = 68090 },
+					MonsterGraveyard = { quest = 68091, counter = 68092 },
+					SparklingPools = { quest = 68093, counter = 68094 },
+					JadedRoots = { quest = 68095, counter = 68096 },
+					DarklightCore = { quest = 68097, counter = 68098 },
+				},
+				Chests = {  
+					Easy = 68024,  
+					Medium = 68049,  
+					Hard = 68074,  
+					Challenge = 68099  
+				}
+			}  
+		}
 	},
 
 	-- Reserved storage from 63951 - 63999

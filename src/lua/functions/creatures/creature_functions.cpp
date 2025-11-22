@@ -93,6 +93,8 @@ void CreatureFunctions::init(lua_State* L) {
 	Lua::registerMethod(L, "Creature", "getAttachedEffects", CreatureFunctions::luaCreatureGetAttachedEffects);
 	Lua::registerMethod(L, "Creature", "getShader", CreatureFunctions::luaCreatureGetShader);
 	Lua::registerMethod(L, "Creature", "setShader", CreatureFunctions::luaCreatureSetShader);
+	Lua::registerMethod(L, "Creature", "getDisplayName", CreatureFunctions::luaCreatureGetDisplayName);  
+	Lua::registerMethod(L, "Creature", "setDisplayName", CreatureFunctions::luaCreatureSetDisplayName);
 
 	CombatFunctions::init(L);
 	MonsterFunctions::init(L);
@@ -1262,4 +1264,32 @@ int CreatureFunctions::luaCreatureSetShader(lua_State* L) {
 	g_game().updateCreatureShader(creature);
 	Lua::pushBoolean(L, true);
 	return 1;
+}
+
+int CreatureFunctions::luaCreatureGetDisplayName(lua_State* L) {  
+    // creature:getDisplayName()  
+    const auto &creature = Lua::getUserdataShared<Creature>(L, 1, "Creature");  
+    if (creature) {  
+        Lua::pushString(L, creature->getDisplayName());  
+    } else {  
+        lua_pushnil(L);  
+    }  
+    return 1;  
+}  
+  
+int CreatureFunctions::luaCreatureSetDisplayName(lua_State* L) {  
+    // creature:setDisplayName(name)  
+    const auto &creature = Lua::getUserdataShared<Creature>(L, 1, "Creature");  
+    if (!creature) {  
+        lua_pushnil(L);  
+        return 1;  
+    }  
+      
+    creature->setDisplayName(Lua::getString(L, 2));  
+      
+    // Recargar la criatura en el cliente  
+    CreatureFunctions::luaCreatureReload(L);  
+      
+    Lua::pushBoolean(L, true);  
+    return 1;  
 }

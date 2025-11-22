@@ -64,6 +64,15 @@ function playerLoginGlobal.onLogin(player)
 		sendBoostMessage(player, "Skill Rate", SCHEDULE_SKILL_RATE > 100)
 	end
 
+	--roulette
+	player:registerEvent("RouletteRewardLogin")
+	player:registerEvent("DollRouletteRewardLogin")
+	player:registerEvent("SlotMachineRewardLogin")
+
+	-- Registrar el sistema de tasks  
+	player:registerEvent("TaskRoomsKill")  
+	player:registerEvent("TaskRoomsRewardLogin")
+
 	-- Send Recruiter Outfit
 	local resultId = db.storeQuery("SELECT `recruiter` FROM `accounts` WHERE `id`= " .. Game.getPlayerAccountId(getPlayerName(player)))
 	if resultId then

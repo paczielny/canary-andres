@@ -12,3 +12,6 @@ dofile(DATA_DIRECTORY .. "/lib/tables/load.lua")
 
 -- Functions library
 dofile(DATA_DIRECTORY .. "/lib/functions/load.lua")
+
+-- Task Rooms System  
+dofile(DATA_DIRECTORY .. "/lib/custom/task_custom.lua")

@@ -1,8 +1,8 @@
 local config = {
-	{ position = { x = 32600, y = 31866, z = 9 }, destination = { x = 32600, y = 31863, z = 9 } },
-	{ position = { x = 32600, y = 31864, z = 9 }, destination = { x = 32600, y = 31867, z = 9 } },
-	{ position = { x = 32601, y = 31866, z = 9 }, destination = { x = 32601, y = 31863, z = 9 } },
-	{ position = { x = 32601, y = 31864, z = 9 }, destination = { x = 32601, y = 31867, z = 9 } },
+	{ position = { x = 32600, y = 31867, z = 9 }, destination = { x = 32600, y = 31864, z = 9 } },
+	{ position = { x = 32600, y = 31865, z = 9 }, destination = { x = 32600, y = 31868, z = 9 } },
+	{ position = { x = 32601, y = 31867, z = 9 }, destination = { x = 32601, y = 31864, z = 9 } },
+	{ position = { x = 32601, y = 31865, z = 9 }, destination = { x = 32601, y = 31868, z = 9 } },
 }
 
 local moveEvent = MoveEvent()

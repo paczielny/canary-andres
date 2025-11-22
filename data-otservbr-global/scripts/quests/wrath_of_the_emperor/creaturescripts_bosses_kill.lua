@@ -1,18 +1,18 @@
 local bosses = {
 	["fury of the emperor"] = {
-		position = Position(33048, 31085, 15),
+		position = Position(33049, 31089, 15),
 		storage = Storage.Quest.U8_6.WrathOfTheEmperor.Bosses.Fury,
 	},
 	["wrath of the emperor"] = {
-		position = Position(33094, 31087, 15),
+		position = Position(33095, 31091, 15),
 		storage = Storage.Quest.U8_6.WrathOfTheEmperor.Bosses.Wrath,
 	},
 	["scorn of the emperor"] = {
-		position = Position(33095, 31110, 15),
+		position = Position(33096, 31114, 15),
 		storage = Storage.Quest.U8_6.WrathOfTheEmperor.Bosses.Scorn,
 	},
 	["spite of the emperor"] = {
-		position = Position(33048, 31111, 15),
+		position = Position(33049, 31115, 15),
 		storage = Storage.Quest.U8_6.WrathOfTheEmperor.Bosses.Spite,
 	},
 }

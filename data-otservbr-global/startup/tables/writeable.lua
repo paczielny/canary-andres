@@ -337,7 +337,7 @@ While Fardos and Uman were working hard on their spell, Zathroth's minions went 
 		]],
 	},
 	[26] = {
-		containerId = 2435,
+		--containerId = 2435,
 		itemId = 129,
 		position = { x = 32061, y = 31894, z = 4 },
 		text = [[
@@ -369,7 +369,7 @@ If anyone ever is looking for treasures, then those isles are the best place to 
 		]],
 	},
 	[29] = {
-		containerId = 2435,
+		--containerId = 2435,
 		itemId = 2827,
 		position = { x = 32061, y = 31894, z = 4 },
 		text = [[
@@ -381,7 +381,7 @@ If anyone ever is looking for treasures, then those isles are the best place to 
 		]],
 	},
 	[30] = {
-		containerId = 2435,
+		--containerId = 2435,
 		itemId = 2829,
 		position = { x = 32061, y = 31894, z = 4 },
 		text = [[
@@ -431,7 +431,7 @@ The Sea Serpent is as huge as a house and can swallow a small ship in one bite. 
 		]],
 	},
 	[35] = {
-		containerId = 2435,
+		--containerId = 2435,
 		itemId = 2831,
 		position = { x = 32061, y = 31894, z = 4 },
 		text = [[

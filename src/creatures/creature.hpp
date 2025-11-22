@@ -126,6 +126,14 @@ public:
 	virtual void removeList() = 0;
 	virtual void addList() = 0;
 
+	const std::string& getDisplayName() const {  
+		return displayName;  
+	}  
+	
+	void setDisplayName(const std::string& name) {  
+		this->displayName = name;  
+	}
+
 	virtual bool canSee(const Position &pos);
 	virtual bool canSeeCreature(const std::shared_ptr<Creature> &creature) const;
 
@@ -872,6 +880,8 @@ private:
 	bool isLostSummon();
 	void sendAsyncTasks();
 	void handleLostSummon(bool teleportSummons);
+
+	std::string displayName;
 
 	std::vector<std::function<void()>> asyncTasks;
 

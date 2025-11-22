@@ -32,6 +32,7 @@
 #include "game/game.hpp"
 #include "game/modal_window/modal_window.hpp"
 #include "game/scheduling/dispatcher.hpp"
+#include "game/scheduling/save_manager.hpp"
 #include "io/functions/iologindata_load_player.hpp"
 #include "io/io_bosstiary.hpp"
 #include "io/iobestiary.hpp"
@@ -40,6 +41,7 @@
 #include "io/ioprey.hpp"
 #include "items/items_classification.hpp"
 #include "items/weapons/weapons.hpp"
+#include "items/containers/container.hpp"
 #include "lua/creature/creatureevent.hpp"
 #include "lua/modules/modules.hpp"
 #include "server/network/message/outputmessage.hpp"
@@ -581,9 +583,16 @@ void ProtocolGame::AddItem(NetworkMessage &msg, const std::shared_ptr<Item> &ite
 }
 
 void ProtocolGame::release() {
-	// dispatcher thread
 	if (player && player->client == shared_from_this()) {
-		player->client.reset();
+		auto p = player;
+		if (!p->isRemoved()) {
+			g_creatureEvents().playerLogout(p);
+			g_game().removeCreature(p, true);
+			g_saveManager().savePlayer(p);
+		} else {
+			g_saveManager().savePlayer(p);
+		}
+		p->client.reset();
 		player = nullptr;
 	}
 
@@ -1068,7 +1077,7 @@ void ProtocolGame::parsePacket(NetworkMessage &msg) {
 	}
 
 	// Modules system
-	if (player && recvbyte != 0xD3) {
+	if (player && recvbyte != 0xD3 && recvbyte != 0xD2) {
 		g_modules().executeOnRecvbyte(player->getID(), msg, recvbyte);
 	}
 
@@ -1418,13 +1427,29 @@ void ProtocolGame::parsePacketFromDispatcher(NetworkMessage &msg, uint8_t recvby
 		case 0xCF:
 			sendBlessingWindow();
 			break;
-		case 0xD2:
-			g_game().playerRequestOutfit(player->getID());
+		case 0xD2: {
+			uint16_t startBufferPosition = msg.getBufferPosition();
+			const auto &outfitModule = g_modules().getEventByRecvbyte(0xD2, false);
+			if (outfitModule) {
+				outfitModule->executeOnRecvbyte(player, msg);
+			}
+			if (msg.getBufferPosition() == startBufferPosition) {
+				g_game().playerRequestOutfit(player->getID());
+			}
 			break;
-		case 0xD3:
-			parseSetOutfit(msg);
+		}
+		case 0xD3: {
+			uint16_t startBufferPosition = msg.getBufferPosition();
+			const auto &outfitModule = g_modules().getEventByRecvbyte(0xD3, false);
+			if (outfitModule) {
+				outfitModule->executeOnRecvbyte(player, msg);
+			}
+			if (msg.getBufferPosition() == startBufferPosition) {
+				parseSetOutfit(msg);
+			}
 			break;
-		case 0xD4:
+		}
+			case 0xD4:
 			parseToggleMount(msg);
 			break;
 		case 0xD5:
@@ -1574,6 +1599,9 @@ void ProtocolGame::GetTileDescription(const std::shared_ptr<Tile> &tile, Network
 	if (creatures) {
 		bool playerAdded = false;
 		for (auto creature : std::ranges::reverse_view(*creatures)) {
+			if (!creature || creature->isRemoved() || !creature->isAlive()) {
+				continue;
+			}
 			if (!player->canSeeCreature(creature)) {
 				continue;
 			}
@@ -5195,6 +5223,40 @@ void ProtocolGame::sendContainer(uint8_t cid, const std::shared_ptr<Container> &
 	writeToOutputBuffer(msg);
 }
 
+void ProtocolGame::sendEmptyContainer(uint8_t cid) {
+	if (oldProtocol) {
+		return;
+	}
+
+	NetworkMessage msg;
+	msg.addByte(0x6E);
+	msg.addByte(cid);
+
+	// Item placeholder (a simple bag)
+	AddItem(msg, ITEM_BAG, 1, 0);
+	msg.addString("Placeholder");
+
+	msg.addByte(8); // container capacity (number of slots)
+	msg.addByte(0x00); // hasParent = false
+	msg.addByte(0x00); // depot search disabled
+	msg.addByte(0x01); // unlocked (drag & drop enabled)
+	msg.addByte(0x00); // no pagination
+
+	msg.add<uint16_t>(0); // containerSize = 0
+	msg.add<uint16_t>(0); // firstIndex = 0
+	msg.addByte(0x00); // number of items = 0
+
+	// categories (2 zero bytes)
+	msg.addByte(0x00);
+	msg.addByte(0x00);
+
+	// extra options (movable and holdingPlayer)
+	msg.addByte(0x00);
+	msg.addByte(0x00);
+
+	writeToOutputBuffer(msg);
+}
+
 void ProtocolGame::sendLootContainers() {
 	if (!player || oldProtocol) {
 		return;
@@ -6743,7 +6805,9 @@ void ProtocolGame::sendToChannel(const std::shared_ptr<Creature> &creature, Spea
 		}
 		type = TALKTYPE_CHANNEL_R1;
 	} else {
-		msg.addString(creature->getName());
+		const std::string& displayName = creature->getDisplayName();  
+		const std::string nameToShow = !displayName.empty() ? displayName : creature->getName();  
+		msg.addString(nameToShow);
 		if (!oldProtocol && statementId != 0) {
 			msg.addByte(0x00); // Show (Traded)
 		}
@@ -8264,8 +8328,10 @@ void ProtocolGame::AddCreature(NetworkMessage &msg, const std::shared_ptr<Creatu
 
 		if (!oldProtocol && creature->isHealthHidden()) {
 			msg.addString(std::string());
-		} else {
-			msg.addString(creature->getName());
+		} else {  
+			const std::string& displayName = creature->getDisplayName();  
+			const std::string nameToShow = !displayName.empty() ? displayName : creature->getName();  
+			msg.addString(nameToShow);  
 		}
 	}
 

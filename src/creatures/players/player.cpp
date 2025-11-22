@@ -406,7 +406,9 @@ int32_t Player::getWeaponSkill(const std::shared_ptr<Item> &item) const {
 
 	const WeaponType_t &weaponType = item->getWeaponType();
 	switch (weaponType) {
-		case WEAPON_FIST: {
+		case WEAPON_FIST:
+		case WEAPON_DUAL_SWORD:
+		case WEAPON_STAFF: {
 			attackSkill = getSkillLevel(SKILL_FIST);
 			break;
 		}
@@ -455,7 +457,9 @@ uint16_t Player::getAttackSkill(const std::shared_ptr<Item> &item) const {
 
 	const WeaponType_t &weaponType = item->getWeaponType();
 	switch (weaponType) {
-		case WEAPON_FIST: {
+		case WEAPON_FIST:
+		case WEAPON_DUAL_SWORD:
+		case WEAPON_STAFF: {
 			attackSkill = getSkillLevel(SKILL_FIST);
 			break;
 		}
@@ -479,12 +483,6 @@ uint16_t Player::getAttackSkill(const std::shared_ptr<Item> &item) const {
 		case WEAPON_DISTANCE: {
 			attackSkill = getSkillLevel(SKILL_DISTANCE);
 			break;
-		}
-
-		case WEAPON_STAFF:  
-		case WEAPON_DUAL_SWORD: {  
-			attackSkill = getSkillLevel(SKILL_FIST);  
-			break;  
 		}
 
 		default: {
@@ -1366,15 +1364,19 @@ bool Player::canCombat(const std::shared_ptr<Creature> &creature) const {
 			return true;  
 		}  
   
-		const auto master = monster->getMaster();  
-		if (!master) {  
-			return true;  
-		}  
-  
-		auto owner = master->getPlayer();  
-		if (!owner || owner == getPlayer() || isPartner(owner) || isGuildMate(owner)) {  
-			return true;  
-		}  
+	const auto master = monster->getMaster();  
+	if (!master) {  
+		return true;  
+	}  
+	
+	auto owner = master->getPlayer();  
+	if (!owner) {  
+		return true; // AÑADE ESTA VALIDACIÓN  
+	}  
+	
+	if (owner == getPlayer() || isPartner(owner) || isGuildMate(owner)) {  
+		return true;  
+	}
   
 		return canCombat(owner);  
 	} else if (const auto &player = creature->getPlayer()) {  
@@ -1450,7 +1452,22 @@ bool Player::canWalkthrough(const std::shared_ptr<Creature> &creature) {
         }    
         return false;    
     }    
-    
+
+	if (expertPvpWalkThrough && player) {  
+		// Verificar tiles especiales primero  
+		const auto &playerTile = player->getTile();  
+		if (playerTile) {  
+			if (playerTile->hasFlag(TILESTATE_DEPOT)) {  
+				return false;  
+			}  
+	
+			const auto &ground = playerTile->getGround();  
+			if (ground && (ground->getID() == 10145 || ground->getID() == 10146)) {  
+				return false;  
+			}  
+		}  
+	}
+
 	if (player && expertPvpWalkThrough) {  
 		const auto &thisPlayer = getPlayer();  
 		
@@ -3477,9 +3494,41 @@ void Player::removeItemImbuementStats(const Imbuement* imbuement) {
 }
 
 void Player::updateImbuementTrackerStats() const {
-	if (imbuementTrackerWindowOpen) {
-		g_game().playerRequestInventoryImbuements(getID(), true);
+	if (!imbuementTrackerWindowOpen) {
+		if (m_pendingImbuementTrackerEventId != 0) {
+			g_dispatcher().stopEvent(m_pendingImbuementTrackerEventId);
+			m_pendingImbuementTrackerEventId = 0;
+		}
+		m_hasPendingImbuementTrackerUpdate = false;
+		return;
 	}
+
+	const int64_t currentTime = OTSYS_TIME();
+	const int64_t elapsed = currentTime - m_lastImbuementTrackerUpdate;
+	if (elapsed < 1000) {
+		if (!m_hasPendingImbuementTrackerUpdate) {
+			m_hasPendingImbuementTrackerUpdate = true;
+			const uint32_t delay = std::max<uint32_t>(static_cast<uint32_t>(1000 - elapsed), SCHEDULER_MINTICKS);
+			m_pendingImbuementTrackerEventId = g_dispatcher().scheduleEvent(
+				delay,
+				[playerId = getID()] {
+					const auto &player = g_game().getPlayerByID(playerId);
+					if (!player || player->isRemoved()) {
+						return;
+					}
+
+					player->m_hasPendingImbuementTrackerUpdate = false;
+					player->m_pendingImbuementTrackerEventId = 0;
+					player->updateImbuementTrackerStats();
+				},
+				__FUNCTION__
+			);
+		}
+		return;
+	}
+
+	m_lastImbuementTrackerUpdate = currentTime;
+	g_game().playerRequestInventoryImbuements(getID(), true);	
 }
 
 // User Interface action exhaustion
@@ -6431,118 +6480,141 @@ void Player::onCombatRemoveCondition(const std::shared_ptr<Condition> &condition
 	}
 }
 
-void Player::onAttackedCreature(const std::shared_ptr<Creature> &target) {
-	Creature::onAttackedCreature(target);
-
-	if (!target) {
-		return;
-	}
-
-	if (target->getZoneType() == ZONE_PVP) {
-		return;
-	}
-
-	if (target == getPlayer()) {
-		addInFightTicks();
-		return;
-	}
-
-	if (hasFlag(PlayerFlags_t::NotGainInFight)) {
-		return;
-	}
-
-	const auto &targetPlayer = target->getPlayer();
-	if (targetPlayer && !isGuildMate(targetPlayer)) {
-		bool previousSituation = hasAttacked(targetPlayer) || targetPlayer->hasAttacked(getPlayer());
-		if (isPartner(targetPlayer)) {
-			return;
-		}
-
-		// Apply PvP mode specific rules for pz lock and skull
-		bool shouldPzLock = false;
-		bool shouldYellowSkull = false;
-
-		// In Hardcore worlds, always apply pz lock rules
-		if (g_game().getWorldType() == WORLD_TYPE_PVP_ENFORCED) {
-			shouldPzLock = true;
-			shouldYellowSkull = false; // Red Fist mode in Hardcore
-		} else {
-			switch (pvpMode) {
-				case PVP_MODE_DOVE: {
-					// Dove: No pz lock, no yellow skull
-					shouldPzLock = true;
-					shouldYellowSkull = false;
-					break;
-				}
-
-				case PVP_MODE_WHITE_HAND: {
-					// White Hand: No pz lock, but yellow skull for target
-					shouldPzLock = false;
-					shouldYellowSkull = true;
-					break;
-				}
-
-				case PVP_MODE_YELLOW_HAND: {
-					// Yellow Hand: pz lock and yellow skull for target
-					shouldPzLock = true;
-					shouldYellowSkull = true;
-					break;
-				}
-
-				case PVP_MODE_RED_FIST: {
-					// Red Fist: pz lock, no yellow skull (can attack anyone)
-					shouldPzLock = true;
-					shouldYellowSkull = false;
-					break;
-				}
-
-				default:
-					shouldPzLock = false;
-					shouldYellowSkull = false;
-					break;
-			}
-		}
-
-		// Apply pz lock if needed
-		if (shouldPzLock && !pzLocked) {
-			pzLocked = true;
-			sendIcons();
-		}
-
-		// Apply yellow skull if needed
-		if (shouldYellowSkull && getSkull() == SKULL_NONE && getSkullClient(targetPlayer) == SKULL_YELLOW) {
-			addAttacked(targetPlayer);
-			targetPlayer->sendCreatureSkull(static_self_cast<Player>());
-		} else if (!targetPlayer->hasAttacked(static_self_cast<Player>())) {
-			if (shouldPzLock && !pzLocked) {
-				pzLocked = true;
-				sendIcons();
-			}
-
-			if (!Combat::isInPvpZone(static_self_cast<Player>(), targetPlayer) && !isInWar(targetPlayer)) {
-				addAttacked(targetPlayer);
-				targetPlayer->addAttackedBy(static_self_cast<Player>());
-
-				if (targetPlayer->getSkull() == SKULL_NONE && getSkull() == SKULL_NONE && !targetPlayer->hasKilled(static_self_cast<Player>())) {
-					setSkull(SKULL_WHITE);
-				}
-
-				if (getSkull() == SKULL_NONE) {
-					targetPlayer->sendCreatureSkull(static_self_cast<Player>());
-				}
-			}
-		}
-
-		if (!previousSituation) {
-			g_game().updateCreatureSquare(getPlayer());
-			g_game().updateCreatureSquare(targetPlayer);
-
+void Player::onAttackedCreature(const std::shared_ptr<Creature> &target) {  
+	Creature::onAttackedCreature(target);  
+  
+	if (!target) {  
+		return;  
+	}  
+  
+	if (target->getZoneType() == ZONE_PVP) {  
+		return;  
+	}  
+  
+	if (target == getPlayer()) {  
+		addInFightTicks();  
+		return;  
+	}  
+  
+	if (hasFlag(PlayerFlags_t::NotGainInFight)) {  
+		return;  
+	}  
+  
+	// MODIFICACIÓN: Detectar si es jugador directo o summon  
+	std::shared_ptr<Player> targetPlayer = nullptr;  
+	  
+	if (target->getPlayer()) {  
+		// Target es un jugador directo  
+		targetPlayer = target->getPlayer();  
+	} else if (const auto &targetMonster = target->getMonster()) {  
+		// Target es un monster, verificar si es summon  
+		if (targetMonster->isSummon()) {  
+			const auto master = targetMonster->getMaster();  
+			if (master) {  
+				targetPlayer = master->getPlayer();  
+			}  
+		}  
+	}  
+  
+	// Si no hay targetPlayer válido (ni jugador ni owner de summon), solo infight  
+	if (!targetPlayer) {  
+		addInFightTicks();  
+		return;  
+	}  
+  
+	// ELIMINADA LA LÍNEA DUPLICADA: const auto &targetPlayer = target->getPlayer();  
+	  
+	if (targetPlayer && !isGuildMate(targetPlayer)) {  
+		bool previousSituation = hasAttacked(targetPlayer) || targetPlayer->hasAttacked(getPlayer());  
+		if (isPartner(targetPlayer)) {  
+			return;  
+		}  
+  
+		// Apply PvP mode specific rules for pz lock and skull  
+		bool shouldPzLock = false;  
+		bool shouldYellowSkull = false;  
+  
+		// In Hardcore worlds, always apply pz lock rules  
+		if (g_game().getWorldType() == WORLD_TYPE_PVP_ENFORCED) {  
+			shouldPzLock = true;  
+			shouldYellowSkull = false; // Red Fist mode in Hardcore  
+		} else {  
+			switch (pvpMode) {  
+				case PVP_MODE_DOVE: {  
+					// Dove: No pz lock, no yellow skull  
+					shouldPzLock = true;  
+					shouldYellowSkull = false;  
+					break;  
+				}  
+  
+				case PVP_MODE_WHITE_HAND: {  
+					// White Hand: No pz lock, but yellow skull for target  
+					shouldPzLock = false;  
+					shouldYellowSkull = true;  
+					break;  
+				}  
+  
+				case PVP_MODE_YELLOW_HAND: {  
+					// Yellow Hand: pz lock and yellow skull for target  
+					shouldPzLock = true;  
+					shouldYellowSkull = true;  
+					break;  
+				}  
+  
+				case PVP_MODE_RED_FIST: {  
+					// Red Fist: pz lock, no yellow skull (can attack anyone)  
+					shouldPzLock = true;  
+					shouldYellowSkull = false;  
+					break;  
+				}  
+  
+				default:  
+					shouldPzLock = false;  
+					shouldYellowSkull = false;  
+					break;  
+			}  
+		}  
+  
+		// Apply pz lock if needed  
+		if (shouldPzLock && !pzLocked) {  
+			pzLocked = true;  
+			sendIcons();  
+		}  
+  
+		// Apply yellow skull if needed  
+		if (shouldYellowSkull && getSkull() == SKULL_NONE && getSkullClient(targetPlayer) == SKULL_YELLOW) {  
+			addAttacked(targetPlayer);  
+			targetPlayer->sendCreatureSkull(static_self_cast<Player>());  
+		} else if (!targetPlayer->hasAttacked(static_self_cast<Player>())) {  
+			if (shouldPzLock && !pzLocked) {  
+				pzLocked = true;  
+				sendIcons();  
+			}  
+  
+			if (!Combat::isInPvpZone(static_self_cast<Player>(), targetPlayer) && !isInWar(targetPlayer)) {  
+				addAttacked(targetPlayer);  
+				targetPlayer->addAttackedBy(static_self_cast<Player>());  
+  
+				if (targetPlayer->getSkull() == SKULL_NONE && getSkull() == SKULL_NONE && !targetPlayer->hasKilled(static_self_cast<Player>())) {  
+					setSkull(SKULL_WHITE);  
+				}  
+  
+				if (getSkull() == SKULL_NONE) {  
+					targetPlayer->sendCreatureSkull(static_self_cast<Player>());  
+				}  
+			}  
+		}  
+  
+		if (!previousSituation) {  
+			g_game().updateCreatureSquare(getPlayer());  
+			g_game().updateCreatureSquare(targetPlayer);  
+  
 			g_game().updateCreatureWalkthrough(getPlayer());  
-			g_game().updateCreatureWalkthrough(targetPlayer); 
-		}
-	}
-
-	addInFightTicks();
+			g_game().updateCreatureWalkthrough(targetPlayer);  
+		}  
+	}  
+  
+	addInFightTicks();  
 }
 
 void Player::onAttacked() {
@@ -11010,9 +11082,21 @@ void Player::registerForgeHistoryDescription(ForgeHistory history) {
 }
 
 // Quickloot
+uint8_t Player::getOpenedContainersLimit() const {
+	if (!client) {
+		return 32;
+	}
+
+	return getOperatingSystem() < CLIENTOS_OTCLIENT_LINUX ? 32 : 254;
+}
 
 void Player::openPlayerContainers() {
-	std::vector<std::pair<uint8_t, std::shared_ptr<Container>>> openContainersList;
+	// skip if client lost connection
+	if (!client) {
+		return;
+	}
+
+	std::map<uint8_t, std::shared_ptr<Container>> openContainersList;
 
 	for (int32_t i = CONST_SLOT_FIRST; i <= CONST_SLOT_LAST; i++) {
 		const auto &item = inventory[i];
@@ -11024,27 +11108,36 @@ void Player::openPlayerContainers() {
 		if (itemContainer) {
 			const auto &cid = item->getAttribute<int64_t>(ItemAttribute_t::OPENCONTAINER);
 			if (cid > 0) {
-				openContainersList.emplace_back(cid, itemContainer);
+				openContainersList[cid] = itemContainer;
 			}
 			for (ContainerIterator it = itemContainer->iterator(); it.hasNext(); it.advance()) {
 				const auto &subContainer = (*it)->getContainer();
 				if (subContainer) {
 					const auto &subcid = (*it)->getAttribute<uint8_t>(ItemAttribute_t::OPENCONTAINER);
 					if (subcid > 0) {
-						openContainersList.emplace_back(subcid, subContainer);
+						openContainersList[subcid] = subContainer;
 					}
 				}
 			}
 		}
 	}
 
-	std::ranges::sort(openContainersList, [](const std::pair<uint8_t, std::shared_ptr<Container>> &left, const std::pair<uint8_t, std::shared_ptr<Container>> &right) {
-		return left.first < right.first;
-	});
-
+	// send saved containers
 	for (const auto &[containerId, container] : openContainersList) {
-		addContainer(containerId - 1, container);
-		onSendContainer(container);
+		if (container) {
+			addContainer(containerId - 1, container);
+			onSendContainer(container);
+		}
+	}
+
+	// fix missing containers for qt client
+	if (getOperatingSystem() < CLIENTOS_OTCLIENT_LINUX) {
+		for (uint32_t i = 0; i < getOpenedContainersLimit(); ++i) {
+			if (!openContainersList[i + 1]) {
+				client->sendEmptyContainer(i);
+				client->sendCloseContainer(i);
+			}
+		}
 	}
 }
 

@@ -99,6 +99,9 @@ private:
 	static int luaCreatureGetSummons(lua_State* L);
 	static int luaCreatureHasBeenSummoned(lua_State* L);
 
+	static int luaCreatureGetDisplayName(lua_State* L);  
+	static int luaCreatureSetDisplayName(lua_State* L);
+
 	static int luaCreatureGetDescription(lua_State* L);
 
 	static int luaCreatureGetPathTo(lua_State* L);

@@ -55134,12 +55134,12 @@ hands of its owner. Granted by TibiaRoyal.com" />
 	</item>
 	<item fromid="28949" toid="28950" name="RESERVED SPRITE" />
 	<item id="28951" article="a" name="focus of corrupted nature" />
-	<item id="28952" name="unknown item" />
+	<item id="28952" name="grass" />
 	<item fromid="28953" toid="28963" name="RESERVED SPRITE" />
-	<item fromid="28964" toid="28975" name="unknown item" />
-	<item id="28976" name="unknown item" />
+	<item fromid="28964" toid="28975" name="grass" />
+	<item id="28976" name="fog" />
 	<item fromid="28977" toid="28987" name="RESERVED SPRITE" />
-	<item fromid="28988" toid="28999" name="unknown item" />
+	<item fromid="28988" toid="28999" name="fog" />
 	<item fromid="29000" toid="29021" name="ice floor">
 		<attribute key="primarytype" value="artificial tiles" />
 	</item>
@@ -62588,6 +62588,9 @@ hands of its owner. Granted by TibiaRoyal.com" />
 	<item fromid="33004" toid="33007" name="fog portal">
 		<attribute key="type" value="teleport" />
 		<attribute key="effect" value="teleport" />
+	</item>
+	<item id="33017" name="strange charm">
+		<attribute key="primarytype" value="artificial tiles"/>
 	</item>
 	<item fromid="33018" toid="33025" name="shrine" editorsuffix="(soul war quest)" />
 	<item fromid="33026" toid="33027" name="heart lamp">
@@ -75024,6 +75027,9 @@ Granted by TibiaGoals.com" />
 	<item id="43374" name="vine">
 		<attribute key="type" value="ladder" />
 	</item>
+	<item fromid="43375" toid="43381" name="vine" />
+	<item fromid="43288" toid="43289" name="murky water" />
+	<item fromid="43995" toid="44007" name="vine" />
 	<item id="43510" name="tibiora's box">
 		<attribute key="description" value="Souvenir from Thais Museum." />
 		<attribute key="weight" value="4200" />
@@ -75292,6 +75298,9 @@ Granted by TibiaGoals.com" />
 		<attribute key="script" value="moveevent">
 			<attribute key="slot" value="ammo" />
 		</attribute>
+	</item>
+	<item id="43746" name="obsidian floor">
+		<attribute key="primarytype" value="natural tiles" />
 	</item>
 	<item id="43751" article="a" name="dead werecrocodile">
 		<attribute key="decayTo" value="0" />
@@ -77590,6 +77599,205 @@ Granted by TibiaGoals.com" />
 	</item>
 	<item id="47379" article="a" name="large obelisk">
 		<attribute key="primarytype" value="pillars"/>
+	</item>
+	<item fromid="42756" toid="42815" name="ornamental tiles">
+		<attribute key="primarytype" value="natural tiles"/>
+	</item>
+	<item fromid="42816" toid="42839" name="sandy drift">
+		<attribute key="primarytype" value="natural tiles"/>
+	</item>
+	<item fromid="42612" toid="42614" name="railing">
+	</item>
+	<item fromid="33131" toid="33140" name="ornamented wall">
+	</item>
+	<item fromid="34462" toid="34494" name="alquitram">
+	</item>
+	<item fromid="42582" toid="42609" name="ornamented wall">
+		<attribute key="primarytype" value="walls"/>
+	</item>
+	<item fromid="42633" toid="42650" name="ornamented wall">
+		<attribute key="primarytype" value="walls"/>
+	</item>
+	<item fromid="43593" toid="43624" name="ornamented wall">
+		<attribute key="primarytype" value="walls"/>
+	</item>	
+	<item fromid="43093" toid="43120" name="obsidian">
+		<attribute key="primarytype" value="walls"/>
+	</item>	
+	<item fromid="42610" toid="42611" article="an" name="archway">
+		<attribute key="primarytype" value="constructions"/>
+	</item>
+	<item fromid="42704" toid="42707" article="an" name="archway">
+		<attribute key="primarytype" value="constructions"/>
+	</item>
+	<item fromid="42708" toid="42713" article="a" name="window">
+		<attribute key="primarytype" value="windows"/>
+	</item>
+	<item id="43022" article="a" name="blue vitreous lamp">
+		<attribute key="transformOnUse" value="43023"/>
+	</item>
+	<item id="43023" article="a" name="blue vitreous lamp">
+		<attribute key="transformOnUse" value="43022"/>
+	</item>
+	<item id="43024" article="a" name="blue vitreous lamp">
+		<attribute key="transformOnUse" value="43025"/>
+	</item>
+	<item id="43025" article="a" name="blue vitreous lamp">
+		<attribute key="transformOnUse" value="43024"/>
+	</item>
+	<item id="43026" article="a" name="red vitreous lamp">
+		<attribute key="transformOnUse" value="43027"/>
+	</item>
+	<item id="43027" article="a" name="red vitreous lamp">
+		<attribute key="transformOnUse" value="43026"/>
+	</item>
+	<item id="43028" article="a" name="red vitreous lamp">
+		<attribute key="transformOnUse" value="43029"/>
+	</item>
+	<item id="43029" article="a" name="red vitreous lamp">
+		<attribute key="transformOnUse" value="43028"/>
+	</item>
+	<item fromid="42407" toid="42438" article="a" name="murky basin">
+		<attribute key="primarytype" value="constructions"/>
+	</item>
+	<item fromid="34571" toid="34577" name="broken pieces">
+	</item>
+	<item fromid="43263" toid="43268" name="railling">
+	</item>	
+	<item fromid="34942" toid="34977" name="some cracks">
+	</item>
+	<item fromid="43970" toid="43981" name="sundial">
+	</item>
+	<item id="43728" name="ornamented light">
+	</item>
+	<item id="43777" name="obsidian gate">
+	</item>
+	<item id="43776" name="full moon">
+	</item>
+	<item id="43774" name="half moon">
+	</item>
+	<item id="43775" name="gibous moon">
+	</item>
+	<item id="43773" name="waxing moon">
+	</item>
+	<item id="43772" name="new moon">
+	</item>
+	<item id="43960" name="fog portal">
+	</item>
+	<item id="42701" name="ornament pilar">
+	</item>
+	<item id="43741" name="ornamented light">
+	</item>
+	<item fromid="43382" toid="43440" article="an" name="obsidian plinth">
+	</item>
+	<item fromid="43441" toid="43469" article="a" name="beacon wall">
+	</item>
+	<item fromid="43519" toid="43550" article="a" name="beacon finial">
+	</item>
+	<item fromid="43470" toid="43486" article="a" name="beacon finial">
+	</item>
+	<item fromid="43044" toid="43046" article="a" name="fern bush">
+	</item>	
+	<item fromid="43047" toid="43049" article="a" name="bluish fern bush">
+	</item>
+	<item fromid="43040" toid="43043" article="a" name="bluish cactus">
+	</item>	
+	<item fromid="43249" toid="43260" name="sandy rocks">
+	</item>
+	<item fromid="43008" toid="43021" article="a" name="heap of sand">
+	</item>
+	<item fromid="43050" toid="43051" article="a" name="globose cactus">
+	</item>	
+	<item fromid="43052" toid="43053" article="a" name="bluish globose cactus">
+	</item>	
+	<item fromid="43213" toid="43237" name="sandy rocks">
+	</item>	
+	<item fromid="43243" toid="43248" name="rocks">
+	</item>	
+	<item fromid="43081" toid="43085" name="rocks">
+	</item>
+	<item fromid="35264" toid="35276" article="a" name="torn sail">
+	</item>	
+	<item fromid="43370" toid="43371" name="stones">
+	</item>	
+	<item fromid="42714" toid="42715" article="a" name="ornamented turret">
+	</item>
+	<item fromid="42439" toid="42447" article="a" name="murky water">
+	</item>	
+	<item id="43240" name="sundial">
+	</item>
+	<item id="34989" name="wrecked ship hull pieces">
+	</item>
+	<item id="43518" article="a" name="beacon wall">
+	</item>
+	<item id="43039" article="a" name="small cactus">
+	</item>
+	<item id="43944" article="a" name="dewberry palm">
+	</item>
+	<item id="42746" article="a" name="sandy wall fountain">
+	</item>
+	<item id="42399" article="a" name="dried fountain">
+	</item>
+	<item id="9677" article="a" name="moonlight flower wreath">
+	</item>
+	<item id="43030" article="a" name="dewberry palm">
+	</item>
+	<item id="43945" article="a" name="bluish dewberry palm">
+	</item>
+	<item id="43031" article="a" name="bluish dewberry palm">
+	</item>
+	<item id="43368" article="a" name="tree">
+	</item>
+	<item id="43032" article="a" name="cactus">
+	</item>
+	<item id="43918" article="a" name="lamp">
+	</item>
+	<item id="43812" article="a" name="lamp">
+	</item>
+	<item id="43033" article="a" name="bluish cactus">
+	</item>	
+	<item id="43035" article="a" name="small bluish cactus">
+	</item>	
+	<item id="42401" article="a" name="tiger rider statue">
+	</item>	
+	<item id="20658" name="parquet floor">
+		<attribute key="primarytype" value="artificial tiles"/>
+	</item>
+	<item fromid="34000" toid="34003" name="sun mosaic">
+	<attribute key="primarytype" value="artificial tiles"/>
+	</item>
+	<item fromid="42848" toid="42850" name="moon mosaic">
+	<attribute key="primarytype" value="artificial tiles"/>
+	</item>
+	<item fromid="42840" toid="42843" name="sun mosaic">
+	<attribute key="primarytype" value="artificial tiles"/>
+	</item>
+	<item fromid="42844" toid="42847" name="flower mosaic">
+		<attribute key="primarytype" value="natural tiles"/>
+	</item>
+	<item fromid="43189" toid="43212" name="purple sand">
+		<attribute key="primarytype" value="natural tiles"/>
+	</item>
+	<item fromid="43165" toid="43188" name="white sand">
+		<attribute key="primarytype" value="natural tiles"/>
+	</item>
+	<item id="43934" article="a" name="closed door">
+		<attribute key="type" value="door"/>
+		<attribute key="blockProjectile" value="1"/>
+		<attribute key="transformOnUse" value="43940"/>
+	</item>
+	<item id="43940" article="a" name="open door">
+		<attribute key="type" value="door"/>
+		<attribute key="transformOnUse" value="43934"/>
+	</item>
+	<item id="43938" article="a" name="closed door">
+		<attribute key="type" value="door"/>
+		<attribute key="blockProjectile" value="1"/>
+		<attribute key="transformOnUse" value="43942"/>
+	</item>
+	<item id="43942" article="a" name="open door">
+		<attribute key="type" value="door"/>
+		<attribute key="transformOnUse" value="43938"/>
 	</item>
 	<item id="47381" article="an" name="orc warlord soul core">
 		<attribute key="primarytype" value="soul cores" />
@@ -85972,5 +86180,37 @@ Granted by TibiaGoals.com" />
 	</item>
 	<item id="52893" article="a" name="christmas bath tub">
 		<attribute key="primarytype" value="decoration" />
+	</item>
+	<item id="43899" article="a" name="cursed wood">
+        <attribute key="description" value="A piece of wood imbued with a vile presence." />
+        <attribute key="primarytype" value="quest items" />
+    </item>
+    <item id="43900" article="a" name="darklight geode">
+        <attribute key="description" value="A geode pulsating with darklight energy." />
+        <attribute key="primarytype" value="quest items" />
+    </item>
+	<item id="60144" name="task scroll">  
+		<attribute key="description" value="A scroll with task information." />  
+	</item>  
+	<item id="60145" name="task scroll">  
+		<attribute key="description" value="A scroll with task information." />  
+	</item>  
+	<item id="60146" name="task scroll">  
+		<attribute key="description" value="A scroll with task information." />  
+	</item>  
+	<item id="60147" name="task scroll">  
+		<attribute key="description" value="A scroll with task information." />  
+	</item>  
+	<item id="60148" name="used task scroll">  
+		<attribute key="description" value="A scroll that has been read." />  
+	</item>  
+	<item id="60149" name="used task scroll">  
+		<attribute key="description" value="A scroll that has been read." />  
+	</item>  
+	<item id="60150" name="used task scroll">  
+		<attribute key="description" value="A scroll that has been read." />  
+	</item>  
+	<item id="60151" name="used task scroll">  
+		<attribute key="description" value="A scroll that has been read." />  
 	</item>
 </items>
